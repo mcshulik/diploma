@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 	dialButton = findViewById(R.id.btn_dial);
 	FileUtils.copyAssetFiles(this, MULTI_LANG_VOCAB, NATIVE_MODEL_NAME);
 	var config = WhisperEngineConfig.builder()
-			 .type(WhisperEngine.Type.NATIVE)
+			 .type(WhisperEngine.Type.JAVA)
 			 .isMultiLang(true)
 			 .modelPath(resolveAssetPath(NATIVE_MODEL_NAME))
 			 .vocabPath(resolveAssetPath(MULTI_LANG_VOCAB))
@@ -182,7 +182,10 @@ public class MainActivity extends AppCompatActivity {
 	    mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
 	    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 	    mediaRecorder.setOutputFile(outputFile);
-
+//	    mediaRecorder.setOnInfoListener(((mr, what, extra) -> {
+//
+//	    }));
+	    mediaRecorder.setOnInfoListener(this::handleAboba);
 	    // Подготовка и запуск записи будет произведена при начале разговора
 	    dialButton.setText("Waiting for the call to start...");
 
@@ -193,7 +196,9 @@ public class MainActivity extends AppCompatActivity {
 		PERMISSION_REQUEST_CODE);
 	}
     }
+    private void  handleAboba(MediaRecorder mr, int what, int extra) {
 
+    }
     private void startRecording() {
 	try {
 	    mediaRecorder.prepare();

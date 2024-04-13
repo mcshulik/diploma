@@ -13,6 +13,7 @@ import org.tensorflow.lite.Interpreter;
 import org.tensorflow.lite.Tensor;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
+import javax.annotation.concurrent.NotThreadSafe;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -20,7 +21,7 @@ import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicReference;
 
-@ThreadSafe
+@NotThreadSafe
 public class JavaWhisperEngine implements WhisperEngine {
     private final String TAG = "WhisperEngineJava";
     private final Interpreter interpreter;
@@ -57,11 +58,11 @@ public class JavaWhisperEngine implements WhisperEngine {
     public String transcribeFile(String wavePath) {
 	// Calculate Mel spectrogram
 	Log.d(TAG, "Calculating Mel spectrogram...");
-	float[] melSpectrogram = getMelSpectrogram(wavePath);
+	float[] samples = WaveUtil.getSamples(wavePath);
 	Log.d(TAG, "Mel spectrogram is calculated...!");
 
 	// Perform inference
-	String result = runInference(melSpectrogram);
+	String result = runInference(samples);
 	Log.d(TAG, "Inference is executed...!");
 
 	return result;
@@ -69,7 +70,8 @@ public class JavaWhisperEngine implements WhisperEngine {
 
     @Override
     public String transcribeBuffer(float[] samples) {
-	return "";
+	float[] melSpectrogram = getMelSpectrogram(samples);
+	return runInference(melSpectrogram);
     }
 
     // Load TFLite model
@@ -85,9 +87,7 @@ public class JavaWhisperEngine implements WhisperEngine {
 	return new Interpreter(model, options);
     }
 
-    private float[] getMelSpectrogram(String wavePath) {
-	// Get samples in PCM_FLOAT format
-	float[] samples = WaveUtil.getSamples(wavePath);
+    private float[] getMelSpectrogram(float[] samples) {
 
 	int fixedInputSize = WhisperUtil.WHISPER_SAMPLE_RATE * WhisperUtil.WHISPER_CHUNK_SIZE;
 	float[] inputSamples = new float[fixedInputSize];
