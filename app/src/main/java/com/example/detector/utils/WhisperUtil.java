@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.*;
+import java.util.concurrent.ForkJoinPool;
 
 import static java.lang.Math.*;
 
@@ -271,8 +272,8 @@ public class WhisperUtil {
 	    float im = 0.0f;
 	    for (int n = 0; n < inSize; n++) {
 		float angle = (float) (2 * Math.PI * k * n / inSize);
-		re += input[n] * cos(angle);
-		im -= input[n] * sin(angle);
+		re += (float) (input[n] * cos(angle));
+		im -= (float) (input[n] * sin(angle));
 	    }
 	    output[k * 2 + 0] = re;
 	    output[k * 2 + 1] = im;

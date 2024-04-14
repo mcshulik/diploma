@@ -8,10 +8,7 @@ import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
 import android.media.MediaRecorder;
-import android.os.Bundle;
-import android.os.Environment;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.*;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -33,6 +30,7 @@ import com.example.detector.engine.WhisperEngine;
 import com.example.detector.engine.WhisperEngineConfig;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
+import com.example.detector.utils.WhisperUtil;
 import lombok.var;
 
 import java.io.*;
@@ -40,7 +38,7 @@ import java.io.*;
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     private EditText phoneNumberEditText;
-
+    private String phoneNum;
     volatile Button dialButton;
     private MediaRecorder mediaRecorder;
     private boolean isRecording = false;
@@ -54,28 +52,36 @@ public class MainActivity extends AppCompatActivity {
     private Whisper whisper;
     private Recorder recorder;
     private TextView tvSpeech;
-    public static final String NATIVE_MODEL_NAME = "whisper-tiny.tflite";
-    public static final String MULTI_LANG_VOCAB = "filters_vocab_multilingual.bin";
+    public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
+    public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.activity_main);
 	dialButton = findViewById(R.id.btn_dial);
-	FileUtils.copyAssetFiles(this, MULTI_LANG_VOCAB, NATIVE_MODEL_NAME);
-	var config = WhisperEngineConfig.builder()
-			 .type(WhisperEngine.Type.JAVA)
-			 .isMultiLang(true)
-			 .modelPath(resolveAssetPath(NATIVE_MODEL_NAME))
-			 .vocabPath(resolveAssetPath(MULTI_LANG_VOCAB))
-			 .build();
-//	var config = WhisperEngineConfig.builder()
+	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
+	var engineConfig = WhisperEngineConfig.builder()
+			       .type(WhisperEngine.Type.JAVA)
+			       .isMultiLang(true)
+			       .modelPath(resolveAssetPath(I8N_MODEL_NAME))
+			       .vocabPath(resolveAssetPath(I8N_LANG_VOC))
+			       .build();
+//	var engineConfig = WhisperEngineConfig.builder()
 //			 .isMultiLang(false)
 //			 .modelPath(resolveAssetPath("whisper-tiny-en.tflite"))
 //			 .vocabPath(resolveAssetPath("filters_vocab_en.bin"))
 //			 .build();
-	whisper = Whisper.of(config).get();
-	recorder = new Recorder(this);
+	whisper = Whisper.of(engineConfig).get();
+	final String[] permissions;
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG};
+	} else {
+
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE};
+	}
+	ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+	recorder = Recorder.of(getFilesDir().getAbsolutePath(), this).get();
 	tvSpeech = findViewById(R.id.tvSpeech);
 	final Handler handler = new Handler(Looper.getMainLooper());
 	whisper.setListener(new WhisperListener() {
@@ -115,17 +121,19 @@ public class MainActivity extends AppCompatActivity {
 		whisper.writeBuffer(samples);
 	    }
 	});
+	checkRecordPermission();
 	dialButton.setOnClickListener(v -> {
 	    assert recorder != null;
 	    if (recorder.isInProgress()) {
+		handler.post(() -> tvSpeech.setText(phoneNum != null ? phoneNum : "aboba"));
 		recorder.stop();
 	    } else {
 		checkRecordPermission();
-		recorder.setFilePath(WaveUtil.RECORDING_FILE);
-		recorder.start();
+		recorder.start(WaveUtil.RECORDING_FILE);
 	    }
 	});
 
+	phoneNum = getIntent().getStringExtra("number");
 //        dialButton.setOnClickListener(v -> startCallRecording());
 
     }
@@ -182,10 +190,7 @@ public class MainActivity extends AppCompatActivity {
 	    mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
 	    mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 	    mediaRecorder.setOutputFile(outputFile);
-//	    mediaRecorder.setOnInfoListener(((mr, what, extra) -> {
-//
-//	    }));
-	    mediaRecorder.setOnInfoListener(this::handleAboba);
+//	    mediaRecorder.setOnInfoListener(this::handleAboba);
 	    // Подготовка и запуск записи будет произведена при начале разговора
 	    dialButton.setText("Waiting for the call to start...");
 
@@ -196,9 +201,10 @@ public class MainActivity extends AppCompatActivity {
 		PERMISSION_REQUEST_CODE);
 	}
     }
-    private void  handleAboba(MediaRecorder mr, int what, int extra) {
 
+    private void handleAboba(MediaRecorder mr, int what, int extra) {
     }
+
     private void startRecording() {
 	try {
 	    mediaRecorder.prepare();

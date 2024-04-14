@@ -10,6 +10,7 @@ import com.example.detector.utils.WhisperUtil;
 import com.google.errorprone.annotations.ThreadSafe;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
+import org.tensorflow.lite.InterpreterApi;
 import org.tensorflow.lite.Tensor;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
@@ -150,8 +151,9 @@ public class JavaWhisperEngine implements WhisperEngine {
 		if (token == params.getTokenTranscribe())
 		    Log.d(TAG, "It is Transcription...");
 
-		if (token == params.getTokenTranslate())
+		if (token == params.getTokenTranslate()) {
 		    Log.d(TAG, "It is Translation...");
+		}
 
 		String word = params.getWordFromToken(token);
 		Log.d(TAG, "Skipping token: " + token + ", word: " + word);

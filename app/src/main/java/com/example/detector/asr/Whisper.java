@@ -9,6 +9,7 @@ import com.google.common.base.Optional;
 import java.io.File;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,7 +27,7 @@ public final class Whisper implements AutoCloseable {
     private final Object audioBufferLock = new Object();
     private final Object whisperEngineLock = new Object();
     private final Queue<float[]> audioBufferQueue = new LinkedList<>();
-    private final Queue<float[]> queue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<float[]> queue = new LinkedBlockingQueue<>();
     private Thread mMicTranscribeThread = null;
     private final WhisperEngine engine;
 
@@ -129,24 +130,27 @@ public final class Whisper implements AutoCloseable {
     }
 
     public void writeBuffer(float[] samples) {
-	synchronized (audioBufferLock) {
-	    audioBufferQueue.add(samples);
-	    audioBufferLock.notify(); // Notify waiting threads
+	try {
+	    queue.put(samples);
+	} catch (InterruptedException ignore) {
+	    Thread.currentThread().interrupt();
 	}
+//	synchronized (audioBufferLock) {
+//	    audioBufferQueue.add(samples);
+//	    audioBufferLock.notify(); // Notify waiting threads
+//	}
     }
 
-    private float[] readBuffer() {
-	synchronized (audioBufferLock) {
-	    while (audioBufferQueue.isEmpty()) {
-		try {
-		    // Wait for the queue to have data
-		    audioBufferLock.wait();
-		} catch (InterruptedException e) {
-		    Thread.currentThread().interrupt();
-		}
+    private @NonNull float[] readBuffer() {
+	float[] values = null;
+	while (values == null) {
+	    try {
+		values = queue.take();
+	    } catch (InterruptedException ignore) {
+		Thread.currentThread().interrupt();
 	    }
-	    return audioBufferQueue.poll();
 	}
+	return values;
     }
 
     private void startMicTranscriptionThread() {
@@ -155,11 +159,9 @@ public final class Whisper implements AutoCloseable {
 	    mMicTranscribeThread = new Thread(() -> {
 		while (true) {
 		    float[] samples = readBuffer();
-		    if (samples != null) {
-			synchronized (whisperEngineLock) {
-			    String result = engine.transcribeBuffer(samples);
-			    sendResult(result);
-			}
+		    synchronized (whisperEngineLock) {
+			String result = engine.transcribeBuffer(samples);
+			sendResult(result);
 		    }
 		}
 	    });
