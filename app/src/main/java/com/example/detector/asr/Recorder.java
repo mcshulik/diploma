@@ -3,9 +3,7 @@ package com.example.detector.asr;
 import android.Manifest;
 import android.content.*;
 import android.content.pm.PackageManager;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
+import android.media.*;
 import android.os.Build;
 import android.telephony.PhoneStateListener;
 import android.telephony.SubscriptionManager;
@@ -150,6 +148,7 @@ public class Recorder {
 	    Log.d(TAG, "Recording is already in progress...");
 	    return;
 	}
+	Log.d(TAG, "Recording is starting...");
 	String fullName = directory.getAbsolutePath() + "/" + fileName;
 	mExecutorThread = new Thread(() -> {
 	    mInProgress.set(true);
@@ -230,11 +229,19 @@ public class Recorder {
 	    }
 	    int channels = 1;
 	    int bytesPerSample = 2;
-	    int sampleRateInHz = 16000;
+//	    int sampleRateInHz = 16000;
+	    int sampleRateInHz = 44100;
 	    int channelConfig = AudioFormat.CHANNEL_IN_MONO; // as per channels
 	    int audioFormat = AudioFormat.ENCODING_PCM_16BIT; // as per bytesPerSample
-	    int audioSource = MediaRecorder.AudioSource.MIC;
+	    int audioSource = MediaRecorder.AudioSource.VOICE_CALL;
 	    int bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
+//	    MediaRecorder recorder = new MediaRecorder();
+//	    recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+//	    recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+//	    recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+//	    recorder.setOutputFile(fileName);
+//	    recorder.prepare();
+//	    recorder.start();
 	    AudioRecord audioRecord = new AudioRecord(audioSource, sampleRateInHz, channelConfig, audioFormat, bufferSize);
 	    audioRecord.startRecording();
 
