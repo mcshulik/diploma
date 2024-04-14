@@ -13,6 +13,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.example.detector.asr.WhisperListener.*;
+
 /**
  * @author Paval Shlyk
  * @since 13/04/2024
@@ -58,7 +60,7 @@ public final class Whisper implements AutoCloseable {
 	Log.d(TAG, "WaveFile: " + filePath);
 	File soundPath = new File(filePath);
 	if (!soundPath.exists()) {
-	    sendUpdate(MSG_FILE_NOT_FOUND);
+	    sendUpdate(State.ERROR, "File not found");
 	    return;
 	}
 	if (isInProgress()) {
@@ -86,16 +88,22 @@ public final class Whisper implements AutoCloseable {
 	}
     }
 
-    private void sendUpdate(String message) {
+    private void sendUpdate(State state, String message) {
 	if (listener != null) {
-	    listener.onUpdate(message);
+	    listener.onState(state, message);
+	}
+    }
+
+    private void sendUpdate(State state) {
+	if (listener != null) {
+	    listener.onState(state, null);
 	}
     }
 
     private void threadFunction(String fullPath) {
 	try {
 	    long startTime = System.currentTimeMillis();
-	    sendUpdate(MSG_PROCESSING);
+	    sendUpdate(State.START);
 
 //                    String result = "";
 //                    if (mAction.equals(ACTION_TRANSCRIBE))
@@ -108,14 +116,14 @@ public final class Whisper implements AutoCloseable {
 		sendResult(result);
 		Log.d(TAG, "Result len: " + result.length() + ", Result: " + result);
 	    }
-	    sendUpdate(MSG_PROCESSING_DONE);
+	    sendUpdate(State.DONE);
 	    // Calculate time required for transcription
 	    long endTime = System.currentTimeMillis();
 	    long timeTaken = endTime - startTime;
 	    Log.d(TAG, "Time Taken for transcription: " + timeTaken + "ms");
 	} catch (Exception e) {
 	    Log.e(TAG, "Error...", e);
-	    sendUpdate(e.getMessage());
+	    sendUpdate(State.ERROR, e.getMessage());
 	}
     }
 
@@ -158,10 +166,14 @@ public final class Whisper implements AutoCloseable {
 	    // Create a transcribe thread
 	    mMicTranscribeThread = new Thread(() -> {
 		while (true) {
-		    float[] samples = readBuffer();
-		    synchronized (whisperEngineLock) {
-			String result = engine.transcribeBuffer(samples);
-			sendResult(result);
+		    try {
+			float[] samples = readBuffer();
+			synchronized (whisperEngineLock) {
+			    String result = engine.transcribeBuffer(samples);
+			    sendResult(result);
+			}
+		    } catch (Throwable t) {
+			Log.e(TAG, t.getMessage());
 		    }
 		}
 	    });

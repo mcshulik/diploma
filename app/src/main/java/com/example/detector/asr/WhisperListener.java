@@ -5,6 +5,13 @@ package com.example.detector.asr;
  * @since 13/04/2024
  */
 public interface WhisperListener {
-    void onUpdate(String message);
+    enum State {
+	START,
+	DONE,
+	ERROR
+    }
+
+    void onState(State state, String message);
+
     void onResult(String result);
 }

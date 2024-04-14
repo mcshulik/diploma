@@ -3,11 +3,7 @@ package com.example.detector;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.AudioTrack;
-import android.media.MediaRecorder;
+import android.media.*;
 import android.os.*;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
@@ -15,9 +11,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.media.MediaPlayer;
-
-
+import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -30,10 +24,9 @@ import com.example.detector.engine.WhisperEngine;
 import com.example.detector.engine.WhisperEngineConfig;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
-import com.example.detector.utils.WhisperUtil;
 import lombok.var;
 
-import java.io.*;
+import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
@@ -54,12 +47,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvSpeech;
     public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
     public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
+    private boolean isInitialized = false;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-	super.onCreate(savedInstanceState);
-	setContentView(R.layout.activity_main);
-	dialButton = findViewById(R.id.btn_dial);
+    private void init() {
 	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
 	var engineConfig = WhisperEngineConfig.builder()
 			       .type(WhisperEngine.Type.JAVA)
@@ -72,28 +62,48 @@ public class MainActivity extends AppCompatActivity {
 //			 .modelPath(resolveAssetPath("whisper-tiny-en.tflite"))
 //			 .vocabPath(resolveAssetPath("filters_vocab_en.bin"))
 //			 .build();
+	File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/CallRecordings");
+	String directory = getFilesDir().getAbsolutePath();
+	if (!folder.exists()) {
+	    if (!folder.mkdirs()) {
+		Looper.prepare();
+		Toast.makeText(this, "Failed to create output directory. Will be saved in " + directory, Toast.LENGTH_LONG)
+		    .show();
+	    }
+	}
+	if (folder.exists()) {
+	    directory = folder.getAbsolutePath();
+	}
 	whisper = Whisper.of(engineConfig).get();
+	recorder = Recorder.of(directory, this).get();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+	super.onCreate(savedInstanceState);
+	setContentView(R.layout.activity_main);
+	dialButton = findViewById(R.id.btn_dial);
 	final String[] permissions;
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG};
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 	} else {
-
-	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE};
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 	}
 	ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
-	recorder = Recorder.of(getFilesDir().getAbsolutePath(), this).get();
+	if (!isInitialized) {
+	    init();
+	}
 	tvSpeech = findViewById(R.id.tvSpeech);
 	final Handler handler = new Handler(Looper.getMainLooper());
 	whisper.setListener(new WhisperListener() {
 	    @Override
-	    public void onUpdate(String message) {
+	    public void onState(WhisperListener.State state, String message) {
 		Log.d(TAG, "Update is received, Message: " + message);
-		handler.post(() -> tvSpeech.setText(message));
-		if (message.equals(Whisper.MSG_PROCESSING)) {
+		if (state == State.START) {
 		    handler.post(() -> tvSpeech.setText(""));
-		} else if (message.equals(Whisper.MSG_FILE_NOT_FOUND)) {
-		    // write code as per need to handled this error
-		    Log.d(TAG, "File not found error...!");
+		}
+		if (state == State.DONE) {
+//		    handler.post(() -> tvSpeech.setText(""));
 		}
 	    }
 
@@ -105,19 +115,21 @@ public class MainActivity extends AppCompatActivity {
 	});
 	recorder.setListener(new RecorderListener() {
 	    @Override
-	    public void onUpdateReceived(String message) {
+	    public void onStateUpdate(@NonNull RecorderListener.State state, String message) {
 		Log.d(TAG, "Update is received, Message: " + message);
-
-		if (message.equals(Recorder.MSG_RECORDING)) {
-//		    handler.post(() -> tvResult.setText(""));
+		if (state == State.RECORDING) {
+		    Log.d(TAG, "Recording is started");
 		    handler.post(() -> dialButton.setText(Recorder.ACTION_STOP));
-		} else if (message.equals(Recorder.MSG_RECORDING_DONE)) {
+		} else if (state == State.DONE) {
+		    Log.d(TAG, "Recording is completed");
 		    handler.post(() -> dialButton.setText(Recorder.ACTION_RECORD));
+		    Looper.prepare();
+		    Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
 		}
 	    }
 
 	    @Override
-	    public void onDataReceived(float[] samples) {
+	    public void onDataUpdate(float[] samples) {
 		whisper.writeBuffer(samples);
 	    }
 	});
@@ -128,12 +140,13 @@ public class MainActivity extends AppCompatActivity {
 		handler.post(() -> tvSpeech.setText(phoneNum != null ? phoneNum : "aboba"));
 		recorder.stop();
 	    } else {
-		checkRecordPermission();
 		recorder.start(WaveUtil.RECORDING_FILE);
 	    }
 	});
-
-	phoneNum = getIntent().getStringExtra("number");
+	String number = getIntent().getStringExtra("number");
+	phoneNum = number == null
+		       ? "Number is not available"
+		       : number;
 //        dialButton.setOnClickListener(v -> startCallRecording());
 
     }
@@ -202,8 +215,6 @@ public class MainActivity extends AppCompatActivity {
 	}
     }
 
-    private void handleAboba(MediaRecorder mr, int what, int extra) {
-    }
 
     private void startRecording() {
 	try {
@@ -301,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
 	if (requestCode == PERMISSION_REQUEST_CODE) {
 	    if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 		// Разрешение получено, можно продолжить работу
-		startCallRecording();
+//		startCallRecording();
 	    } else {
 		// Разрешение не было предоставлено
 	    }
