@@ -31,6 +31,7 @@ public class BlockedNumber {
     //The time when
     @Column(name = "registration_time", nullable = false)
     private Timestamp registrationTime;
+
     @PrePersist
     public void beforeInsert() {
 	this.registrationTime = Timestamp.from(Instant.now());
