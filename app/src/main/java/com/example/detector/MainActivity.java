@@ -81,12 +81,17 @@ public class MainActivity extends AppCompatActivity {
         } else {
             permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
         }
+
         ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
+        if(!checkPermissions(permissions))
+            return;
+
         if (!isInitialized) {
             init();
         }
         tvSpeech = findViewById(R.id.tvSpeech);
         final Handler handler = new Handler(Looper.getMainLooper());
+
         whisper.setListener(new WhisperListener() {
             @Override
             public void onState(WhisperListener.State state, String message) {
@@ -304,10 +309,19 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Разрешение получено, можно продолжить работу
-//		startCallRecording();
+		startCallRecording();
             } else {
                 // Разрешение не было предоставлено
             }
         }
+    }
+
+    private boolean checkPermissions(String[] permissions) {
+        for (String permission : permissions) {
+            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
     }
 }
