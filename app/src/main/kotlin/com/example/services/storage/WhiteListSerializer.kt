@@ -12,7 +12,7 @@ import java.io.OutputStream
  *@author Paval Shlyk
  */
 @ServiceScoped
-class WhiteSerializer : Serializer<WhiteList> {
+class WhiteListSerializer : Serializer<WhiteList> {
     override val defaultValue: WhiteList
         get() = WhiteList.getDefaultInstance()
 

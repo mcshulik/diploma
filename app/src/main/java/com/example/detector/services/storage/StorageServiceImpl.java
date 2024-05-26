@@ -1,50 +1,116 @@
 package com.example.detector.services.storage;
 
-import android.content.Context;
-import android.widget.Toast;
-import androidx.datastore.core.Serializer;
+import com.example.detector.services.IncomingPhoneNumber;
 import com.example.detector.services.StorageService;
-import com.example.services.storage.WhitePhoneNumber;
-import dagger.hilt.android.qualifiers.ApplicationContext;
-import kotlin.Unit;
-import kotlin.coroutines.Continuation;
-import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.example.detector.services.storage.model.PhoneNumber;
+import com.example.detector.services.storage.model.PhoneNumberProjection;
+import com.example.detector.services.storage.model.VoiceRecording;
+import io.reactivex.rxjava3.core.Single;
+import lombok.*;
 
 import javax.inject.Inject;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Paval Shlyk
  * @since 26/05/2024
  */
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
+@Builder
 public class StorageServiceImpl implements StorageService {
-    private final  @ApplicationContext Context context;
+    private static final String PRIVATE_PHONE_NUMBER = "Owner is hidden";
+    private static final String TAG = "StorageServiceImpl";
+    private final PhoneNumberDao phoneNumberDao;
+    private final VoiceRecordingDao voiceRecordingDao;
+
     @Override
-    public void doStuff() {
-	Toast.makeText(context, "The message", Toast.LENGTH_SHORT).show();
+    public void addPrivateWhiteNumber(String number) {
+	val entity = PhoneNumber.builder()
+			 .number(number)
+			 .isShared(false)
+			 .isSynchronized(true)
+			 .owner(PRIVATE_PHONE_NUMBER)
+			 .build()
+			 .asWhite();
+	Single<Long> single = phoneNumberDao
+				  .insert(entity);
 
     }
-    private static class SettingsSerializer implements Serializer<Object> {
 
-        @Override
-        public Object getDefaultValue() {
-            return null;
-        }
+    @Override
+    public void addWhiteNumber(IncomingPhoneNumber number, boolean isNew) {
+	val entity = toEntity(number, isNew);
+	Single<Long> single = phoneNumberDao
+				  .insert(entity.asWhite());
+    }
 
-        @Nullable
-        @Override
-        public Object readFrom(@NotNull InputStream inputStream, @NotNull Continuation<? super Object> continuation) {
-            return null;
-        }
+    @Override
+    public void addBlackNumber(IncomingPhoneNumber number, boolean isNew) {
+	val entity = toEntity(number, isNew);
+	Single<Long> single = phoneNumberDao
+				  .insert(entity.asBlack());
+	if (isNew && number.hasAudio()) {
+	    val id = single.blockingGet();
+	    val recordingEntity = VoiceRecording.builder()
+				      .phoneNumberId(id)
+				      .rawData(number.getAudio())
+				      .build();
+	    Single<Long> single1 = voiceRecordingDao.insert(recordingEntity);
+	}
+    }
 
-        @Nullable
-        @Override
-        public Object writeTo(Object o, @NotNull OutputStream outputStream, @NotNull Continuation<? super Unit> continuation) {
-            return null;
-        }
+    @Override
+    public boolean isWhiteNumber(String number) {
+	return phoneNumberDao
+		   .existsWhiteNumber(number)
+		   .blockingGet();
+    }
+
+    @Override
+    public boolean isBlackNumber(String number) {
+	return phoneNumberDao
+		   .existsBlackNumber(number)
+		   .blockingGet();
+    }
+
+    @Override
+    public List<IncomingPhoneNumber> getNewWhiteNumbers() {
+	return phoneNumberDao
+		   .notSynchronizedWhiteList()
+		   .map(this::toDtoList)
+		   .blockingGet();
+    }
+
+    @Override
+    public List<IncomingPhoneNumber> getNewBlackNumbers() {
+	return phoneNumberDao
+		   .notSynchronizedBlackList()
+		   .map(this::toDtoList)
+		   .blockingGet();
+    }
+
+    private PhoneNumber toEntity(IncomingPhoneNumber dto, boolean isSynchronized) {
+	return PhoneNumber.builder()
+		   .isShared(true)
+		   .isSynchronized(isSynchronized)
+		   .number(dto.getNumber())
+		   .owner(dto.getOwner())
+		   .build();
+    }
+
+    private <T extends PhoneNumberProjection> IncomingPhoneNumber toDto(T entity) {
+	return IncomingPhoneNumber.builder()
+		   .number(entity.getNumber())
+		   .owner(entity.getOwner())
+		   .build();
+    }
+
+    private <T extends PhoneNumberProjection> List<IncomingPhoneNumber> toDtoList(List<T> list) {
+	val dtoList = new ArrayList<IncomingPhoneNumber>();
+	for (T projection : list) {
+	    dtoList.add(toDto(projection));
+	}
+	return dtoList;
     }
 }

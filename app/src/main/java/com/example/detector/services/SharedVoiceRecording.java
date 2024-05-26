@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * recording is acceptable only for banlist
+ *
  * @author Paval Shlyk
  * @since 26/05/2024
  */
@@ -13,7 +15,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public final class NumberHolder {
-    private String number;
-    private String name;
+public class SharedVoiceRecording {
+    private byte[] data;
 }

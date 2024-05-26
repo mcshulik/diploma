@@ -13,13 +13,13 @@ import java.io.OutputStream
  * @since 26/05/2024
  */
 @ServiceScoped
-class BlackSerializer : Serializer<BlackPhoneNumber?> {
-    override val defaultValue: BlackPhoneNumber?
-        get() = null
+class BlackListSerializer : Serializer<BlackList> {
+    override val defaultValue: BlackList
+        get() = BlackList.getDefaultInstance()
 
-    override suspend fun readFrom(input: InputStream): BlackPhoneNumber? {
+    override suspend fun readFrom(input: InputStream): BlackList {
         try {
-            return BlackPhoneNumber.parseFrom(input)
+            return BlackList.parseFrom(input)
         } catch (e: IOException) {
             val msg = "Proto serialization failed"
             Log.e(TAG, msg, e)
@@ -27,9 +27,9 @@ class BlackSerializer : Serializer<BlackPhoneNumber?> {
         }
     }
 
-    override suspend fun writeTo(t: BlackPhoneNumber?, output: OutputStream) {
+    override suspend fun writeTo(t: BlackList, output: OutputStream) {
         try {
-            t?.writeTo(output);
+            t.writeTo(output);
         } catch (e: IOException) {
             val msg = "Proto deserialization failed";
             Log.e(TAG, msg);

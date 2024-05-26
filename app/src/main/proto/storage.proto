@@ -3,11 +3,19 @@ syntax = "proto3";
 option java_package = "com.example.services.storage";
 option java_multiple_files = true;
 
-message WhitePhoneNumber {
+message PhoneNumber {
   string number = 1;
-  ///should the number be sent to server
+  //can be this number be send to the server
   bool is_shared = 2;
+  string owner = 3;
+  //should synchronize number with server
+  bool is_synchronized = 4;
 }
-message BlackPhoneNumber {
-  string number = 1;
+
+message WhiteList {
+  repeated PhoneNumber numbers = 1;
+}
+
+message BlackList {
+  repeated PhoneNumber numbers = 1;
 }

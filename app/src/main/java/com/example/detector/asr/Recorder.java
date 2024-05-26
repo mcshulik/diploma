@@ -232,7 +232,7 @@ public class Recorder {
 	    int sampleRateInHz = 44100;
 	    int channelConfig = AudioFormat.CHANNEL_IN_MONO; // as per channels
 	    int audioFormat = AudioFormat.ENCODING_PCM_16BIT; // as per bytesPerSample
-	    int audioSource = MediaRecorder.AudioSource.VOICE_CALL;
+	    int audioSource = MediaRecorder.AudioSource.MIC;
 	    int bufferSize = AudioRecord.getMinBufferSize(sampleRateInHz, channelConfig, audioFormat);
 //	    MediaRecorder recorder = new MediaRecorder();
 //	    recorder.setAudioSource(MediaRecorder.AudioSource.MIC);

@@ -62,9 +62,12 @@ dependencies {
     implementation 'com.google.android.material:material:1.9.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 
+    implementation 'androidx.room:room-runtime:2.4.0'
     implementation 'com.google.protobuf:protobuf-javalite:3.8.0'
     implementation "androidx.datastore:datastore-core:1.1.1"
     implementation("androidx.datastore:datastore-rxjava3:1.1.1")
+
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
 
     implementation 'org.tensorflow:tensorflow-lite:2.11.0'
     implementation 'org.tensorflow:tensorflow-lite-support:0.4.3'
@@ -90,6 +93,7 @@ kapt {
     keepJavacAnnotationProcessors = true
     dependencies {
         annotationProcessor "com.google.dagger:hilt-compiler:2.44"
+        annotationProcessor 'androidx.room:room-compiler:2.4.0'
     }
 }
 

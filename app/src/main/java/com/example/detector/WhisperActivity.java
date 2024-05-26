@@ -26,10 +26,8 @@ import com.example.detector.services.StorageService;
 import com.example.detector.services.WhisperService;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
-import dagger.hilt.EntryPoint;
 import dagger.hilt.android.AndroidEntryPoint;
 import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import lombok.var;
 
 import javax.inject.Inject;
@@ -57,10 +55,12 @@ public class WhisperActivity extends AppCompatActivity {
     public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
     public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
     private boolean isInitialized = false;
+
     @Inject
     public WhisperActivity(StorageService storageService, WhisperService whisperService) {
-	storageService.doStuff();
+//	storageService.addBlackNumber("1.1.1");
     }
+
     private void init() {
 	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
 	var engineConfig = WhisperEngineConfig.builder()
@@ -115,7 +115,7 @@ public class WhisperActivity extends AppCompatActivity {
 		    handler.post(() -> tvSpeech.setText(""));
 		}
 		if (state == State.DONE) {
-//		    handler.post(() -> tvSpeech.setText(""));
+		    handler.post(() -> tvSpeech.setText(""));
 		}
 	    }
 
