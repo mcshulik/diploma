@@ -22,12 +22,13 @@ import com.example.detector.asr.Whisper;
 import com.example.detector.asr.WhisperListener;
 import com.example.detector.engine.WhisperEngine;
 import com.example.detector.engine.WhisperEngineConfig;
-import com.example.detector.services.StorageService;
-import com.example.detector.services.WhisperService;
+import com.example.detector.services.storage.StorageService;
+import com.example.detector.services.whisper.WhisperService;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
 import lombok.NoArgsConstructor;
+import lombok.val;
 import lombok.var;
 
 import javax.inject.Inject;
@@ -58,7 +59,7 @@ public class WhisperActivity extends AppCompatActivity {
 
     @Inject
     public WhisperActivity(StorageService storageService, WhisperService whisperService) {
-//	storageService.addBlackNumber("1.1.1");
+	val tuple = storageService.findBlackNumbers().blockingFirst();
     }
 
     private void init() {

@@ -7,6 +7,7 @@ import org.mapstruct.MapperConfig;
  * @since 24/05/2024
  */
 @MapperConfig(
+    uses = CommonMapperConfig.class
 )
 public class CentralConfig {
 }

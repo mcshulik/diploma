@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.sql.Timestamp;
+
 /**
  * @author Paval Shlyk
  * @since 26/05/2024
@@ -15,17 +17,21 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity(
-    tableName = "voice_recording",
+    tableName = "voice_record",
     foreignKeys = {@ForeignKey(entity = PhoneNumber.class, parentColumns = "id", childColumns = "number_id")}
 )
-public class VoiceRecording {
+public class VoiceRecord {
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
     private Long id;
     @ColumnInfo(name = "number_id")
-    private Long phoneNumberId;
+    private long phoneNumberId;
+    private float quality;
+    private String speechText;
+    private String recognizedText;
+    private Timestamp duration;
+    private byte[] audio;
 
-    private byte[] rawData;
-
+    @Builder.Default
     private boolean isSynchronized = false;
 }

@@ -41,14 +41,16 @@ public class VoiceRecord {
     @Column(name = "speech_text", nullable = false)
     private String speechText;
 
+    ///consider removing this field (that will be too huge?)
+    @Column(name = "audio", nullable = false)
+    private byte[] audio;
+
     //the user which had recorded the speech
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
     private User recorder;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recognition_model_id", nullable = false)
     private RecognitionModel model;
-
-
 }

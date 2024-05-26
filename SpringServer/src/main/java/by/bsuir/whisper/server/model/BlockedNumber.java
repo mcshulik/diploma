@@ -24,6 +24,8 @@ public class BlockedNumber {
 
     @Column(name = "number", nullable = false, unique = true, length = 100)
     private String number;
+    @Column(name = "owner", nullable = true)
+    private String owner;
 
     @Column(name = "approve_count", nullable = false)
     private Long approveCount;

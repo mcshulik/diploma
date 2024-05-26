@@ -7,6 +7,7 @@ import androidx.room.Query;
 import com.example.detector.services.storage.model.BlackNumber;
 import com.example.detector.services.storage.model.PhoneNumber;
 import com.example.detector.services.storage.model.WhiteNumber;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 @Dao
 public interface PhoneNumberDao {
-    @Insert(onConflict = OnConflictStrategy.ABORT)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     Single<Long> insert(PhoneNumber entity);
 
     @Query("select * from black_list")
@@ -26,11 +27,8 @@ public interface PhoneNumberDao {
     @Query("select * from white_list")
     Single<List<WhiteNumber>> allWhiteList();
 
-    @Query("select * from white_list where isSynchronized = 0")
-    Single<List<WhiteNumber>> notSynchronizedWhiteList();
-
     @Query("select * from black_list where isSynchronized = 0")
-    Single<List<BlackNumber>> notSynchronizedBlackList();
+    Flowable<BlackNumber> notSynchronizedBlackList();
 
     @Query("delete from phone_number where number = :number and numberType = 1")
     void deleteWhiteByNumber(String number);
@@ -43,4 +41,7 @@ public interface PhoneNumberDao {
 
     @Query("select exists (select 1 from black_list where number = :number)")
     Single<Boolean> existsBlackNumber(String number);
+
+    @Query("select * from black_list where number = :number")
+    Single<BlackNumber> findBlackNumber(String number);
 }

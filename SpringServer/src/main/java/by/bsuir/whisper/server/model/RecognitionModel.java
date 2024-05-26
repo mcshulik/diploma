@@ -19,5 +19,7 @@ public class RecognitionModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
-    
+
+    @Column(name = "description", nullable = false)
+    private String description;
 }

@@ -14,12 +14,10 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@DatabaseView(viewName = "white_list", value = "select id, number, owner,  isShared, isSynchronized " +
+@DatabaseView(viewName = "white_list", value = "select id, number, owner " +
 						   "from phone_number where numberType = 1")
 public class WhiteNumber implements PhoneNumberProjection {
     private Long id;
     private String number;
     private String owner;
-    private boolean isShared;
-    private boolean isSynchronized;
 }

@@ -1,4 +1,4 @@
-package by.bsuir.whisper.server.model;
+package by.bsuir.whisper.server.api.dto.response;
 
 import lombok.NonNull;
 
@@ -17,6 +17,7 @@ public record VoiceRecordDto(
     String recognitionText,
     @NonNull
     String speechText,
+    byte @NonNull [] audio,
     long recorderId,
     long modelId
 ) implements Serializable {

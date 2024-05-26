@@ -1,6 +1,5 @@
 package com.example.detector.services.whisper;
 
-import com.example.detector.services.WhisperService;
 import lombok.RequiredArgsConstructor;
 
 import javax.inject.Inject;
