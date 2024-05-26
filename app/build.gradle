@@ -1,8 +1,10 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.kapt'
-    id 'com.google.dagger.hilt.android' apply(false)
+    id 'com.google.dagger.hilt.android'
     id "com.google.protobuf" version "0.9.4"
+
+    id 'org.jetbrains.kotlin.android'
 }
 android {
     namespace 'com.example.detector'
@@ -27,6 +29,9 @@ android {
             java {
                 srcDir 'src/main/java'
             }
+            kotlin {
+                srcDir 'src/main/kotlin'
+            }
         }
     }
     buildTypes {
@@ -44,6 +49,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
     }
 }
 
@@ -63,10 +71,9 @@ dependencies {
 
     implementation "com.google.dagger:hilt-android:2.44"
 
-//    kapt "com.google.dagger:hilt-compiler:2.44"
-
     implementation group: 'com.google.errorprone', name: 'error_prone_annotations', version: '2.26.1'
     implementation("com.google.guava:guava:33.1.0-android")
+    implementation 'androidx.core:core-ktx:+'
 
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
@@ -81,6 +88,9 @@ dependencies {
 kapt {
     correctErrorTypes true
     keepJavacAnnotationProcessors = true
+    dependencies {
+        annotationProcessor "com.google.dagger:hilt-compiler:2.44"
+    }
 }
 
 protobuf {
@@ -95,7 +105,7 @@ protobuf {
         }
     }
     generateProtoTasks {
-        all().configureEach {task ->
+        all().configureEach { task ->
             task.builtins {
                 java {
                     option "lite"

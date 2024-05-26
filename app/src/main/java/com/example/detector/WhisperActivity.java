@@ -26,7 +26,9 @@ import com.example.detector.services.StorageService;
 import com.example.detector.services.WhisperService;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
+import dagger.hilt.EntryPoint;
 import dagger.hilt.android.AndroidEntryPoint;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.var;
 
@@ -34,7 +36,7 @@ import javax.inject.Inject;
 import java.io.File;
 
 @AndroidEntryPoint
-//@RequiredArgsConstructor(onConstructor_ = {@Inject})
+@NoArgsConstructor
 public class WhisperActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     private EditText phoneNumberEditText;

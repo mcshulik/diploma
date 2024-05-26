@@ -1,11 +1,13 @@
 package com.example.detector.context;
 
-import com.example.detector.WhisperActivity;
+import androidx.datastore.core.Serializer;
 import com.example.detector.services.StorageService;
 import com.example.detector.services.storage.StorageServiceImpl;
+import com.example.services.storage.BlackPhoneNumber;
 import dagger.Binds;
 import dagger.Module;
 import dagger.hilt.InstallIn;
+import dagger.hilt.components.SingletonComponent;
 
 import javax.inject.Singleton;
 
@@ -14,7 +16,7 @@ import javax.inject.Singleton;
  * @since 26/05/2024
  */
 @Module
-@InstallIn(WhisperActivity.class)
+@InstallIn(SingletonComponent.class)
 public abstract class StorageModule {
     @Binds
     @Singleton

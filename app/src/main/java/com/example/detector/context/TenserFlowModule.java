@@ -6,6 +6,8 @@ import com.example.detector.services.whisper.WhisperServiceImpl;
 import dagger.Binds;
 import dagger.Module;
 import dagger.hilt.InstallIn;
+import dagger.hilt.android.components.ActivityComponent;
+import dagger.hilt.components.SingletonComponent;
 
 import javax.inject.Singleton;
 import java.nio.file.WatchService;
@@ -15,7 +17,7 @@ import java.nio.file.WatchService;
  * @since 26/05/2024
  */
 @Module
-@InstallIn(WhisperActivity.class)
+@InstallIn(SingletonComponent.class)
 public abstract class TenserFlowModule {
     @Binds
     @Singleton
