@@ -1,6 +1,7 @@
 package com.example.services.storage
 
 import android.util.Log
+import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import dagger.hilt.android.scopes.ServiceScoped
 import java.io.IOException
@@ -12,7 +13,7 @@ import java.io.OutputStream
  * @since 26/05/2024
  */
 @ServiceScoped
-abstract class BlackSerializer : Serializer<BlackPhoneNumber?> {
+class BlackSerializer : Serializer<BlackPhoneNumber?> {
     override val defaultValue: BlackPhoneNumber?
         get() = null
 
@@ -22,7 +23,7 @@ abstract class BlackSerializer : Serializer<BlackPhoneNumber?> {
         } catch (e: IOException) {
             val msg = "Proto serialization failed"
             Log.e(TAG, msg, e)
-            throw RuntimeException(msg, e)
+            throw CorruptionException(msg, e)
         }
     }
 
@@ -32,7 +33,7 @@ abstract class BlackSerializer : Serializer<BlackPhoneNumber?> {
         } catch (e: IOException) {
             val msg = "Proto deserialization failed";
             Log.e(TAG, msg);
-            throw RuntimeException(e)
+            throw CorruptionException(msg, e)
         }
     }
 
