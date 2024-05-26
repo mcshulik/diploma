@@ -13,7 +13,6 @@ import android.util.Log;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import com.example.detector.MainActivity;
 import com.example.detector.asr.RecorderListener.State;
 import com.example.detector.utils.WaveUtil;
 import com.google.common.base.Optional;

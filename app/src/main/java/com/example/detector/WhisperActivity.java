@@ -22,13 +22,20 @@ import com.example.detector.asr.Whisper;
 import com.example.detector.asr.WhisperListener;
 import com.example.detector.engine.WhisperEngine;
 import com.example.detector.engine.WhisperEngineConfig;
+import com.example.detector.services.StorageService;
+import com.example.detector.services.WhisperService;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
+import dagger.hilt.android.AndroidEntryPoint;
+import lombok.RequiredArgsConstructor;
 import lombok.var;
 
+import javax.inject.Inject;
 import java.io.File;
 
-public class MainActivity extends AppCompatActivity {
+@AndroidEntryPoint
+//@RequiredArgsConstructor(onConstructor_ = {@Inject})
+public class WhisperActivity extends AppCompatActivity {
     private final String TAG = "MainActivity";
     private EditText phoneNumberEditText;
     private String phoneNum;
@@ -48,11 +55,14 @@ public class MainActivity extends AppCompatActivity {
     public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
     public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
     private boolean isInitialized = false;
-
+    @Inject
+    public WhisperActivity(StorageService storageService, WhisperService whisperService) {
+	storageService.doStuff();
+    }
     private void init() {
 	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
 	var engineConfig = WhisperEngineConfig.builder()
-			       .type(WhisperEngine.Type.JAVA)
+			       .type(WhisperEngine.Type.NATIVE)
 			       .isMultiLang(true)
 			       .modelPath(resolveAssetPath(I8N_MODEL_NAME))
 			       .vocabPath(resolveAssetPath(I8N_LANG_VOC))
@@ -124,7 +134,7 @@ public class MainActivity extends AppCompatActivity {
 		    Log.d(TAG, "Recording is completed");
 		    handler.post(() -> dialButton.setText(Recorder.ACTION_RECORD));
 		    Looper.prepare();
-		    Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+		    Toast.makeText(WhisperActivity.this, message, Toast.LENGTH_LONG).show();
 		}
 	    }
 

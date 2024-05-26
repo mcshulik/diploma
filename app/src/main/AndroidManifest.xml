@@ -15,7 +15,7 @@
             android:theme="@style/Theme.CallTest"
             tools:targetApi="30">
         <activity
-                android:name="com.example.detector.MainActivity"
+                android:name="com.example.detector.WhisperActivity"
                 android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>

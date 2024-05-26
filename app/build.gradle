@@ -1,14 +1,16 @@
 plugins {
     id 'com.android.application'
+    id 'org.jetbrains.kotlin.kapt'
+    id 'com.google.dagger.hilt.android' apply(false)
+    id "com.google.protobuf" version "0.9.4"
 }
-
 android {
     namespace 'com.example.detector'
     compileSdk 34
-
+    ndkVersion '23.2.8568313'
     defaultConfig {
         applicationId "com.example.detector"
-        minSdk 23
+        minSdk 27
         targetSdk 34
         versionCode 1
         versionName "1.0"
@@ -17,7 +19,16 @@ android {
             abiFilters 'armeabi-v7a', 'arm64-v8a'
         }
     }
-
+    sourceSets {
+        main {
+            proto {
+                srcDir 'src/main/proto'
+            }
+            java {
+                srcDir 'src/main/java'
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
@@ -36,26 +47,60 @@ android {
     }
 }
 
+
 dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
-
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    implementation 'com.google.protobuf:protobuf-javalite:3.8.0'
+    implementation "androidx.datastore:datastore-core:1.1.1"
+    implementation("androidx.datastore:datastore-rxjava3:1.1.1")
+
     implementation 'org.tensorflow:tensorflow-lite:2.11.0'
     implementation 'org.tensorflow:tensorflow-lite-support:0.4.3'
+
+    implementation "com.google.dagger:hilt-android:2.44"
+
+//    kapt "com.google.dagger:hilt-compiler:2.44"
+
     implementation group: 'com.google.errorprone', name: 'error_prone_annotations', version: '2.26.1'
-
     implementation("com.google.guava:guava:33.1.0-android")
-
-
-    compileOnly "org.projectlombok:lombok:1.18.32"
 
     annotationProcessor 'org.projectlombok:lombok:1.18.32'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.32'
+    compileOnly 'org.projectlombok:lombok:1.18.32'
 
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+kapt {
+    correctErrorTypes true
+    keepJavacAnnotationProcessors = true
+}
+
+protobuf {
+    protoc {
+        // The artifact spec for the Protobuf Compiler
+        artifact = 'com.google.protobuf:protoc:3.8.0'
+    }
+    plugins {
+        javalite {
+            // The codegen for lite comes as a separate artifact
+            artifact = 'com.google.protobuf:protoc-gen-javalite:3.8.0'
+        }
+    }
+    generateProtoTasks {
+        all().configureEach {task ->
+            task.builtins {
+                java {
+                    option "lite"
+                }
+            }
+        }
+    }
 }
