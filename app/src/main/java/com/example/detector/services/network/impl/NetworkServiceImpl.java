@@ -36,7 +36,6 @@ import java.util.Optional;
  * @since 26/05/2024
  */
 @RequiredArgsConstructor(onConstructor_ = {@Inject})
-@ServiceScoped
 public class NetworkServiceImpl implements NetworkService {
     private static final String TAG = "NetworkServiceImpl";
     private static final MediaType JSON_MEDIA_TYPE = MediaType.get("application/json; charset=utf-8");

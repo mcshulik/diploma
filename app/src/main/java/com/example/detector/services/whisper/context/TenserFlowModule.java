@@ -40,13 +40,13 @@ public abstract class TenserFlowModule {
     );
 
     @Provides
-    @ServiceScoped
+    @Singleton
     public static WhisperEngine whisperEngine(
 	@ApplicationContext Context context
     ) {
 	FileUtils.copyAssetFiles(context, I8N_LANG_VOC, I8N_MODEL_NAME);
 	val engineConfig = WhisperEngineConfig.builder()
-			       .type(WhisperEngine.Type.NATIVE)
+			       .type(WhisperEngine.Type.JAVA)
 			       .isMultiLang(true)
 			       .modelPath(resolveAssetPath(context, I8N_MODEL_NAME))
 			       .vocabPath(resolveAssetPath(context, I8N_LANG_VOC))

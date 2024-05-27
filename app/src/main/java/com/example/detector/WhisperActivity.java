@@ -5,7 +5,6 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.*;
 import android.os.*;
-import android.speech.RecognitionService;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -19,19 +18,13 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import com.example.detector.asr.Recorder;
 import com.example.detector.asr.RecorderListener;
-import com.example.detector.asr.Whisper;
-import com.example.detector.asr.WhisperListener;
 import com.example.detector.services.network.NetworkService;
-import com.example.detector.services.whisper.engine.WhisperEngine;
-import com.example.detector.services.whisper.engine.WhisperEngineConfig;
 import com.example.detector.services.storage.StorageService;
 import com.example.detector.services.whisper.WhisperService;
-import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
-import io.vertx.core.net.NetServer;
+import io.reactivex.rxjava3.disposables.Disposable;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
@@ -57,11 +50,11 @@ public class WhisperActivity extends AppCompatActivity {
     private TextView tvSpeech;
     private boolean isInitialized = false;
     @Inject
-    private StorageService storageService;
+    public StorageService storageService;
     @Inject
-    private WhisperService whisperService;
+    public WhisperService whisperService;
     @Inject
-    private NetworkService networkService;
+    public NetworkService networkService;
 
     private void init() {
 	File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/CallRecordings");
@@ -91,24 +84,6 @@ public class WhisperActivity extends AppCompatActivity {
 	}
 	tvSpeech = findViewById(R.id.tvSpeech);
 	final Handler handler = new Handler(Looper.getMainLooper());
-	whisper.setListener(new WhisperListener() {
-	    @Override
-	    public void onState(WhisperListener.State state, String message) {
-		Log.d(TAG, "Update is received, Message: " + message);
-		if (state == State.START) {
-		    handler.post(() -> tvSpeech.setText(""));
-		}
-		if (state == State.DONE) {
-		    handler.post(() -> tvSpeech.setText(""));
-		}
-	    }
-
-	    @Override
-	    public void onResult(String result) {
-		Log.d(TAG, "Result: " + result);
-		handler.post(() -> tvSpeech.append(result));
-	    }
-	});
 	recorder.setListener(new RecorderListener() {
 	    @Override
 	    public void onStateUpdate(@NonNull RecorderListener.State state, String message) {
@@ -126,7 +101,16 @@ public class WhisperActivity extends AppCompatActivity {
 
 	    @Override
 	    public void onDataUpdate(float[] samples) {
-		whisper.writeBuffer(samples);
+		Disposable value = whisperService.transcript(samples)
+				       .subscribe(text -> {
+					       handler.post(() -> tvSpeech.setText(text));
+					   },
+					   error -> {
+					       handler.post(() -> tvSpeech.setText("Failed to process speech"));
+					   },
+					   () -> {
+					       handler.post(() -> tvSpeech.setText("No data available"));
+					   });
 	    }
 	});
 	checkRecordPermission();
@@ -285,7 +269,7 @@ public class WhisperActivity extends AppCompatActivity {
     protected void onDestroy() {
 	super.onDestroy();
 	stopCallRecording();
-	whisper.close();
+	whisperService.dispose();
 	// Убираем слушателя при уничтожении активности
 	if (telephonyManager != null && phoneStateListener != null) {
 	    telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);

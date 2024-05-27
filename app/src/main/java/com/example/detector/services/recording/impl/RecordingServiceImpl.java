@@ -18,9 +18,9 @@ public class RecordingServiceImpl implements RecordingService {
     private final Object lock = new Object();
     private final Recorder recorder;
 
-    public Single<float[]> start() {
+    public Flowable<float[]> start() {
 	if (isRunning()) {
-	    return Single.error(new RecordingException("Recorder is already started"));
+	    return Flowable.error(new RecordingException("Recorder is already started"));
 	}
 	return null;
     }
@@ -28,6 +28,9 @@ public class RecordingServiceImpl implements RecordingService {
     public Flowable<float[]> startBackground() {
 	if (isRunning()) {
 	    return Flowable.error(new RecordingException("Recorder is already started"));
+	}
+	synchronized (lock) {
+
 	}
 	return null;
     }

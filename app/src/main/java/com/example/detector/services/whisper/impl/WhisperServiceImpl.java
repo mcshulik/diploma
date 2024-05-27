@@ -7,7 +7,6 @@ import com.example.detector.utils.WaveUtil;
 import com.google.errorprone.annotations.ThreadSafe;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.schedulers.Schedulers;
-import io.vertx.core.file.OpenOptions;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -27,7 +26,6 @@ public class WhisperServiceImpl implements WhisperService {
     private final WhisperEngine engine;
     private final ReentrantLock lock = new ReentrantLock();
     private final AtomicBoolean isDisposed = new AtomicBoolean(true);
-    private final static OpenOptions READ_FILE_OPTIONS = new OpenOptions().setRead(true);
 
     @Override
     public Maybe<String> transcript(float[] samples) {

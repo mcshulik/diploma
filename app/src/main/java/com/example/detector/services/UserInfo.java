@@ -1,5 +1,6 @@
 package com.example.detector.services;
 
+import lombok.Builder;
 import lombok.Value;
 
 /**
@@ -7,6 +8,7 @@ import lombok.Value;
  * @since 26/05/2024
  */
 @Value
+@Builder
 public class UserInfo {
     long id;
 }

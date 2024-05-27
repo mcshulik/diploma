@@ -8,6 +8,7 @@ import com.example.detector.services.storage.model.BlackNumber;
 import com.example.detector.services.storage.model.PhoneNumber;
 import com.example.detector.services.storage.model.VoiceRecord;
 import com.example.detector.services.storage.model.WhiteNumber;
+import dagger.Provides;
 
 /**
  * @author Paval Shlyk
@@ -18,7 +19,8 @@ import com.example.detector.services.storage.model.WhiteNumber;
     views = {BlackNumber.class, WhiteNumber.class},
     version = 1
 )
-public abstract class DatabaseConfig extends RoomDatabase {
+public abstract class DatabaseSchema extends RoomDatabase {
     public abstract PhoneNumberDao phoneNumberDao();
+
     public abstract VoiceRecordDao voiceRecordDao();
 }
