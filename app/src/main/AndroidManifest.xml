@@ -5,6 +5,7 @@
     <uses-feature android:name="android.hardware.telephony" android:required="false"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
+            android:requestLegacyExternalStorage="true"
             android:name="com.example.detector.WhisperApplication"
             android:allowBackup="true"
             android:dataExtractionRules="@xml/data_extraction_rules"
@@ -29,6 +30,7 @@
                     android:value=""/>
         </activity>
     </application>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CALL_PHONE"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
