@@ -12,7 +12,10 @@ import com.example.detector.services.network.mappers.PhoneNumberMapper;
 import com.example.detector.services.network.mappers.RecognitionResultMapper;
 import com.example.detector.services.network.model.ServerPhoneNumber;
 import com.example.detector.services.network.model.ServerRecognitionResult;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import dagger.hilt.android.scopes.ServiceScoped;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -47,7 +50,6 @@ public class NetworkServiceImpl implements NetworkService {
 
     @Override
     public Maybe<List<LocalPhoneNumber>> tryAccessBlackList() {
-	val gson = new GsonBuilder().create();
 	val request = new Request.Builder()
 			  .url("/black-list")
 			  .get()

@@ -8,6 +8,8 @@ import org.mapstruct.*;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
 import java.util.List;
 
 /**
@@ -21,18 +23,10 @@ public abstract class VoiceRecordMapper {
     @Mapping(target = "isSynchronized", constant = "false")
     @Mapping(target = "id", ignore = true)
     public abstract VoiceRecord toEntity(long numberId, @NonNull LocalRecognitionResult recognition);
+
     @Named("toDto")
     public abstract LocalRecognitionResult toDto(VoiceRecord record);
 
     @IterableMapping(qualifiedByName = "toDto")
     public abstract List<LocalRecognitionResult> toDtoList(List<VoiceRecord> entities);
-
-    protected Duration map(Timestamp timestamp) {
-	return Duration.ofMillis(timestamp.getTime());
-    }
-
-    protected Timestamp map(Duration duration) {
-	return new Timestamp(duration.toMillis());
-    }
-
 }

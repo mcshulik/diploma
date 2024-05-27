@@ -29,7 +29,8 @@ public class VoiceRecord {
     private float quality;
     private String speechText;
     private String recognizedText;
-    private Timestamp duration;
+
+    private Long duration;
     private byte[] audio;
 
     @Builder.Default

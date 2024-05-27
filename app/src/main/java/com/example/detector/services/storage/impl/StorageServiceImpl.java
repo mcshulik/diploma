@@ -5,7 +5,7 @@ import com.example.detector.services.LocalPhoneNumber;
 import com.example.detector.services.LocalRecognitionResult;
 import com.example.detector.services.storage.PhoneNumberDao;
 import com.example.detector.services.storage.StorageService;
-import com.example.detector.services.storage.VoiceRecordingDao;
+import com.example.detector.services.storage.VoiceRecordDao;
 import com.example.detector.services.storage.mappers.PhoneNumberMapper;
 import com.example.detector.services.storage.mappers.VoiceRecordMapper;
 import com.example.detector.services.storage.model.BlackNumber;
@@ -15,7 +15,6 @@ import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import lombok.Builder;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 
@@ -33,7 +32,7 @@ public class StorageServiceImpl implements StorageService {
     private static final String PRIVATE_PHONE_NUMBER = "Owner is hidden";
     private static final String TAG = "StorageServiceImpl";
     private final PhoneNumberDao phoneNumberDao;
-    private final VoiceRecordingDao voiceRecordingDao;
+    private final VoiceRecordDao voiceRecordingDao;
     private final VoiceRecordMapper voiceRecordMapper;
     private final PhoneNumberMapper phoneNumberMapper;
 

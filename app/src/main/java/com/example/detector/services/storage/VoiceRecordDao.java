@@ -10,7 +10,7 @@ import io.reactivex.rxjava3.core.Single;
  * @since 26/05/2024
  */
 @Dao
-public interface VoiceRecordingDao {
+public interface VoiceRecordDao {
     @Insert(onConflict = OnConflictStrategy.ABORT)
     Single<Long> insert(VoiceRecord entity);
     @Query("select * from voice_record where isSynchronized = 0 and number_id = :id")

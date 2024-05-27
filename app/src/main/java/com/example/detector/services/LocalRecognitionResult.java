@@ -12,7 +12,8 @@ import java.time.Duration;
 @Builder
 @Value
 public class LocalRecognitionResult {
-    Duration duration;
+    //in millis
+    long duration;
     float quality;
     String speechText;
     String recognizedText;

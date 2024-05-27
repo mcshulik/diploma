@@ -29,7 +29,6 @@ import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
 import lombok.NoArgsConstructor;
 import lombok.val;
-import lombok.var;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -64,7 +63,7 @@ public class WhisperActivity extends AppCompatActivity {
 
     private void init() {
 	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
-	var engineConfig = WhisperEngineConfig.builder()
+	val engineConfig = WhisperEngineConfig.builder()
 			       .type(WhisperEngine.Type.NATIVE)
 			       .isMultiLang(true)
 			       .modelPath(resolveAssetPath(I8N_MODEL_NAME))

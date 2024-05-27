@@ -16,7 +16,8 @@ import java.time.Duration;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ServerRecognitionResult {
-    Duration duration;
+    //in millis
+    long duration;
     float quality;
     String speechText;
     String recognizedText;

@@ -18,7 +18,7 @@ import com.example.detector.utils.WaveUtil;
 import com.google.common.base.Optional;
 import com.google.errorprone.annotations.ThreadSafe;
 import lombok.NonNull;
-import lombok.var;
+import lombok.val;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -83,9 +83,9 @@ public class Recorder {
 	if (ActivityCompat.checkSelfPermission(context, Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED
 		&& ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
 		&& ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-	    var telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-	    var subscription = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
-	    var config = RecorderConfig.builder()
+	    val telephony = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+	    val subscription = (SubscriptionManager) context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+	    val config = RecorderConfig.builder()
 			     .directory(new File(directory))
 			     .telephony(telephony).subscription(subscription)
 			     .context(context)
@@ -247,7 +247,7 @@ public class Recorder {
 	    final int bufferSize1Sec = sampleRateInHz * bytesPerSample * channels;
 	    final int defaultBufferSize = bufferSize1Sec * 30;
 //	    int bufferSize30Sec = bufferSize1Sec * 30;
-	    var output = new ByteArrayOutputStream(defaultBufferSize);
+	    val output = new ByteArrayOutputStream(defaultBufferSize);
 //	    ByteBuffer buffer30Sec = ByteBuffer.allocateDirect(bufferSize30Sec);
 	    ByteBuffer bufferRealtime = ByteBuffer.allocateDirect(bufferSize1Sec * 5);
 	    int timer = 0;
