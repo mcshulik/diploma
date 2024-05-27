@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.*;
 import android.os.*;
+import android.speech.RecognitionService;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -20,6 +21,7 @@ import com.example.detector.asr.Recorder;
 import com.example.detector.asr.RecorderListener;
 import com.example.detector.asr.Whisper;
 import com.example.detector.asr.WhisperListener;
+import com.example.detector.services.network.NetworkService;
 import com.example.detector.services.whisper.engine.WhisperEngine;
 import com.example.detector.services.whisper.engine.WhisperEngineConfig;
 import com.example.detector.services.storage.StorageService;
@@ -27,8 +29,10 @@ import com.example.detector.services.whisper.WhisperService;
 import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
+import io.vertx.core.net.NetServer;
 import lombok.NoArgsConstructor;
 import lombok.val;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -49,31 +53,17 @@ public class WhisperActivity extends AppCompatActivity {
     private AudioRecord audioRecord;
     private AudioTrack audioTrack;
     private MediaPlayer mediaPlayer;
-    private Whisper whisper;
     private Recorder recorder;
     private TextView tvSpeech;
-    public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
-    public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
     private boolean isInitialized = false;
-
     @Inject
-    public WhisperActivity(StorageService storageService, WhisperService whisperService) {
-	val tuple = storageService.findBlackNumbers().blockingFirst();
-    }
+    private StorageService storageService;
+    @Inject
+    private WhisperService whisperService;
+    @Inject
+    private NetworkService networkService;
 
     private void init() {
-	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
-	val engineConfig = WhisperEngineConfig.builder()
-			       .type(WhisperEngine.Type.NATIVE)
-			       .isMultiLang(true)
-			       .modelPath(resolveAssetPath(I8N_MODEL_NAME))
-			       .vocabPath(resolveAssetPath(I8N_LANG_VOC))
-			       .build();
-//	var engineConfig = WhisperEngineConfig.builder()
-//			 .isMultiLang(false)
-//			 .modelPath(resolveAssetPath("whisper-tiny-en.tflite"))
-//			 .vocabPath(resolveAssetPath("filters_vocab_en.bin"))
-//			 .build();
 	File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/CallRecordings");
 	String directory = getFilesDir().getAbsolutePath();
 	if (!folder.exists()) {
@@ -86,7 +76,6 @@ public class WhisperActivity extends AppCompatActivity {
 	if (folder.exists()) {
 	    directory = folder.getAbsolutePath();
 	}
-	whisper = Whisper.of(engineConfig).get();
 	recorder = Recorder.of(directory, this).get();
     }
 
@@ -95,12 +84,7 @@ public class WhisperActivity extends AppCompatActivity {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.activity_main);
 	dialButton = findViewById(R.id.btn_dial);
-	final String[] permissions;
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
-	} else {
-	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
-	}
+	final String[] permissions = getPermissions();
 	ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
 	if (!isInitialized) {
 	    init();
@@ -161,6 +145,17 @@ public class WhisperActivity extends AppCompatActivity {
 		       : number;
 //        dialButton.setOnClickListener(v -> startCallRecording());
 
+    }
+
+    @NotNull
+    private static String[] getPermissions() {
+	final String[] permissions;
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
+	} else {
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
+	}
+	return permissions;
     }
 
     private void startCallRecording() {
@@ -297,14 +292,6 @@ public class WhisperActivity extends AppCompatActivity {
 	}
     }
 
-    private @NonNull String resolveAssetPath(String assetName) {
-	File outfile = new File(getFilesDir(), assetName);
-	if (!outfile.exists()) {
-	    Log.d(TAG, "File not found - " + outfile.getAbsolutePath());
-	}
-	Log.d(TAG, "Returned asset path: " + outfile.getAbsolutePath());
-	return outfile.getAbsolutePath();
-    }
 
     private void checkRecordPermission() {
 	int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);
