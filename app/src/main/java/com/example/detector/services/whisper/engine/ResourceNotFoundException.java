@@ -1,4 +1,4 @@
-package com.example.detector.engine;
+package com.example.detector.services.whisper.engine;
 
 /**
  * @author Paval Shlyk

@@ -1,10 +1,13 @@
-package com.example.detector.engine;
+package com.example.detector.services.whisper.engine;
 
-import com.example.detector.asr.WhisperListener;
-import com.example.detector.engine.impl.JavaWhisperEngine;
-import com.example.detector.engine.impl.NativeWhisperEngine;
+import com.example.detector.services.whisper.engine.impl.JavaWhisperEngine;
+import com.example.detector.services.whisper.engine.impl.NativeWhisperEngine;
 import lombok.NonNull;
 
+import javax.annotation.concurrent.NotThreadSafe;
+import java.util.Optional;
+
+@NotThreadSafe
 public interface WhisperEngine extends AutoCloseable {
     enum Type {
 	NATIVE, JAVA
@@ -12,11 +15,7 @@ public interface WhisperEngine extends AutoCloseable {
 
     void interrupt();
 
-    void setListener(WhisperListener listener);
-
-    String transcribeFile(String wavePath);
-
-    String transcribeBuffer(float[] samples);
+    Optional<String> transcribeBuffer(float[] samples);
 
     static WhisperEngine withConfig(@NonNull WhisperEngineConfig config) throws ResourceNotFoundException {
 	final WhisperEngine engine;

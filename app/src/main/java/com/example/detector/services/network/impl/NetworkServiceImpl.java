@@ -54,7 +54,6 @@ public class NetworkServiceImpl implements NetworkService {
 			  .url("/black-list")
 			  .get()
 			  .build();
-
 	return sendRequest(request, ServerPhoneNumber[].class)
 		   .map(Arrays::asList)
 		   .map(numberMapper::fromServerDtoList);

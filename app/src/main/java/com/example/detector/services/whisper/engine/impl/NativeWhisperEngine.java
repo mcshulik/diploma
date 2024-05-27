@@ -1,16 +1,17 @@
-package com.example.detector.engine.impl;
+package com.example.detector.services.whisper.engine.impl;
 
 import android.util.Log;
-import com.example.detector.asr.WhisperListener;
-import com.example.detector.engine.ResourceNotFoundException;
-import com.example.detector.engine.WhisperEngine;
-import com.example.detector.engine.WhisperEngineConfig;
-import com.google.errorprone.annotations.ThreadSafe;
+import com.example.detector.services.whisper.engine.ResourceNotFoundException;
+import com.example.detector.services.whisper.engine.WhisperEngine;
+import com.example.detector.services.whisper.engine.WhisperEngineConfig;
+import lombok.val;
 
-@ThreadSafe
+import java.util.Optional;
+
 public class NativeWhisperEngine implements WhisperEngine {
     private final String TAG = "WhisperEngineNative";
     private final long nativePtr; // Native pointer to the TFLiteEngine instance
+
     public NativeWhisperEngine(WhisperEngineConfig config) {
 	final String modelPath = config.modelPath();
 //	final String vocabPath = config.vocabPath();//native engine uses hard-coded values
@@ -27,22 +28,16 @@ public class NativeWhisperEngine implements WhisperEngine {
 
 
     @Override
-    public String transcribeBuffer(float[] samples) {
-	return transcribeBuffer(nativePtr, samples);
-    }
-
-    @Override
-    public String transcribeFile(String waveFile) {
-	return transcribeFile(nativePtr, waveFile);
+    public Optional<String> transcribeBuffer(float[] samples) {
+	val msg = transcribeBuffer(nativePtr, samples);
+	if (msg == null || msg.isEmpty()) {
+	    return Optional.empty();
+	}
+	return Optional.of(msg);
     }
 
     @Override
     public void interrupt() {
-    }
-
-    @Override
-    public void setListener(WhisperListener listener) {
-
     }
 
     static {
@@ -58,6 +53,7 @@ public class NativeWhisperEngine implements WhisperEngine {
 
     private native String transcribeBuffer(long nativePtr, float[] samples);
 
+    @Deprecated
     private native String transcribeFile(long nativePtr, String waveFile);
 
     @Override

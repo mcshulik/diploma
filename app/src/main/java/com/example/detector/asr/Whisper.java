@@ -2,8 +2,8 @@ package com.example.detector.asr;
 
 import android.util.Log;
 import androidx.annotation.NonNull;
-import com.example.detector.engine.WhisperEngine;
-import com.example.detector.engine.WhisperEngineConfig;
+import com.example.detector.services.whisper.engine.WhisperEngine;
+import com.example.detector.services.whisper.engine.WhisperEngineConfig;
 import com.google.common.base.Optional;
 
 import java.io.File;

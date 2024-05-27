@@ -1,7 +1,7 @@
-package com.example.detector.context;
+package com.example.detector.services.whisper.context;
 
 import com.example.detector.services.whisper.WhisperService;
-import com.example.detector.services.whisper.WhisperServiceImpl;
+import com.example.detector.services.whisper.impl.WhisperServiceImpl;
 import dagger.Binds;
 import dagger.Module;
 import dagger.hilt.InstallIn;

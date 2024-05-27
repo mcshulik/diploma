@@ -1,11 +1,11 @@
-package com.example.detector.engine;
+package com.example.detector.services.whisper.engine;
 
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.experimental.Accessors;
 
-import static com.example.detector.engine.WhisperEngine.*;
+import static com.example.detector.services.whisper.engine.WhisperEngine.*;
 
 /**
  * @author Paval Shlyk
