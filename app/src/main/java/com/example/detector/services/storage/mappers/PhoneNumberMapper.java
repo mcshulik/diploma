@@ -6,6 +6,9 @@ import com.example.detector.services.storage.model.PhoneNumber;
 import com.example.detector.services.storage.model.PhoneNumberProjection;
 import org.mapstruct.*;
 
+import javax.annotation.MatchesPattern;
+import java.util.List;
+
 /**
  * @author Paval Shlyk
  * @since 27/05/2024
@@ -20,5 +23,9 @@ public interface PhoneNumberMapper {
     PhoneNumber toEntity(LocalPhoneNumber dto);
 
     @Mapping(target = "isSynchronized", ignore = true)
+    @Named("toDto")
     LocalPhoneNumber toDto(BlackNumber number);
+
+    @IterableMapping(qualifiedByName = "toDto")
+    List<LocalPhoneNumber> toDtoList(List<BlackNumber> numbers);
 }

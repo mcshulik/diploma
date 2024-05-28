@@ -20,19 +20,19 @@ public interface StorageService {
 
     Single<Boolean> isWhiteNumber(String number);
 
-    void addBlackNumber(LocalPhoneNumber number, Maybe<LocalRecognitionResult> recognition);
+    Single<Boolean> isBlackNumber(String number);
 
-    default void addBlackNumberAll(List<LocalPhoneNumber> numbers) {
-	for (final LocalPhoneNumber number : numbers) {
-	    addBlackNumber(number, Maybe.empty());
-	}
-    }
+    Single<?> addBlackNumber(LocalPhoneNumber number, Maybe<LocalRecognitionResult> recognition);
+
+    void synchronizeNumbers(List<LocalPhoneNumber> numbers);
 
 
     Maybe<LocalPhoneNumber> findBlackNumber(String number);
 
     ///return only not synchronized black numbers
-    Flowable<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> findBlackNumbers();
+    Flowable<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> notSyncBlackNumbers();
+
+    Single<List<LocalPhoneNumber>> allBlackNumbers();
 
     //todo: add removing functionality
 

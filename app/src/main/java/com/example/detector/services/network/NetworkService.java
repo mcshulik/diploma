@@ -16,6 +16,6 @@ public interface NetworkService {
 
     //return true if data is sent
     //return false otherwise
-    Maybe<?> trySendBlackList(List<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> numbers);
+    Maybe<?> trySendBlackList(Pair<LocalPhoneNumber, List<LocalRecognitionResult>>... numbers);
 }
 

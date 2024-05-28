@@ -19,6 +19,7 @@ import com.google.gson.JsonSyntaxException;
 import dagger.hilt.android.scopes.ServiceScoped;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import lombok.var;
@@ -50,23 +51,24 @@ public class NetworkServiceImpl implements NetworkService {
     @Override
     public Maybe<List<LocalPhoneNumber>> tryAccessBlackList() {
 	val request = new Request.Builder()
-			  .url("/black-list")
+			  .url("http://localhost:8081/api/v1.0/black-list")
 			  .get()
 			  .build();
 	return sendRequest(request, ServerPhoneNumber[].class)
 		   .map(Arrays::asList)
-		   .map(numberMapper::fromServerDtoList);
+		   .map(numberMapper::fromServerDtoList)
+		   .subscribeOn(Schedulers.io());
     }
 
     @Override
-    public Maybe<?> trySendBlackList(List<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> numbers) {
+    public Maybe<?> trySendBlackList(Pair<LocalPhoneNumber, List<LocalRecognitionResult>>... numbers) {
 	var single = (Single<?>) Single.just(42);
 	for (Pair<LocalPhoneNumber, List<LocalRecognitionResult>> numberAndResults : numbers) {
 	    val number = (ServerPhoneNumber) numberMapper.toServerDto(numberAndResults.first);
 	    val results = numberAndResults.second;
 
 	    val numberRequest = new Request.Builder()
-				    .url("/black-list")
+				    .url("http://localhost:8081/api/v1.0/black-list")
 				    .post(ofBody(number))
 				    .addHeader(CONTENT_TYPE_HEADER, JSON_TYPE_HEADER)
 				    .build();
@@ -78,7 +80,7 @@ public class NetworkServiceImpl implements NetworkService {
 
 					long resourceId = response.getId();
 					val resultsRequest = new Request.Builder()
-								 .url("/black-list/" + resourceId + "/records")
+								 .url("http://localhost:8081/api/v1.0/black-list/" + resourceId + "/records")
 								 .post(ofBody(serverResults))
 								 .build();
 					val request = sendRequest(resultsRequest, null);
@@ -88,7 +90,9 @@ public class NetworkServiceImpl implements NetworkService {
 	    single = single
 			 .zipWith(requestSingle, (magic, tuple) -> 42);
 	}
-	return single.toMaybe();
+	return single
+		   .toMaybe()
+		   .subscribeOn(Schedulers.io());
     }
 
     private <T> Optional<T> ofJson(ResponseBody body, Class<T> clazz) {

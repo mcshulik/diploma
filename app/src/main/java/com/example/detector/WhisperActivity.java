@@ -7,28 +7,40 @@ import android.media.*;
 import android.os.*;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.util.Pair;
+import android.view.View;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.detector.asr.Recorder;
 import com.example.detector.asr.RecorderListener;
+import com.example.detector.services.LocalPhoneNumber;
+import com.example.detector.services.LocalRecognitionResult;
 import com.example.detector.services.network.NetworkService;
 import com.example.detector.services.storage.StorageService;
 import com.example.detector.services.whisper.WhisperService;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import lombok.NoArgsConstructor;
+import lombok.val;
 import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AndroidEntryPoint
 @NoArgsConstructor
@@ -37,6 +49,11 @@ public class WhisperActivity extends AppCompatActivity {
     private EditText phoneNumberEditText;
     private String phoneNum;
     volatile Button dialButton;
+    private Button btnSendServerData;
+    private Button btnRetrieveServerData;
+    private Button btnSync;
+    private ListView viewBlackList;
+    private EditText editPhoneNumber;
     private MediaRecorder mediaRecorder;
     private boolean isRecording = false;
     private TelephonyManager telephonyManager;
@@ -46,6 +63,7 @@ public class WhisperActivity extends AppCompatActivity {
     private AudioRecord audioRecord;
     private AudioTrack audioTrack;
     private MediaPlayer mediaPlayer;
+    private ArrayAdapter<String> blackListAdapter;
     private Recorder recorder;
     private TextView tvSpeech;
     private boolean isInitialized = false;
@@ -76,7 +94,17 @@ public class WhisperActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.activity_main);
+
 	dialButton = findViewById(R.id.btn_dial);
+	btnSendServerData = findViewById(R.id.btnSendServerData);
+	btnRetrieveServerData = findViewById(R.id.btnRetrieveServerData);
+	editPhoneNumber = findViewById(R.id.editTextPhone);
+	btnSync = findViewById(R.id.btnSync);
+	viewBlackList = findViewById(R.id.viewBlackList);
+	blackListAdapter = new ArrayAdapter<>(
+	    this, android.R.layout.simple_list_item_1, new ArrayList<>()
+	);
+	viewBlackList.setAdapter(blackListAdapter);
 	final String[] permissions = getPermissions();
 	ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
 	if (!isInitialized) {
@@ -103,7 +131,31 @@ public class WhisperActivity extends AppCompatActivity {
 	    public void onDataUpdate(float[] samples) {
 		Disposable value = whisperService.transcript(samples)
 				       .subscribe(text -> {
+					       boolean isBlack
+						   = storageService.isBlackNumber(text).blockingGet();
 					       handler.post(() -> tvSpeech.setText(text));
+					       if (isBlack) {
+						   val number = editPhoneNumber.getText().toString();
+						   Toast
+						       .makeText(WhisperActivity.this, "Attention. Robber!", Toast.LENGTH_LONG)
+						       .show();
+						   val dto = LocalPhoneNumber.builder()
+								 .owner(number)
+								 .number(number)
+								 .isSynchronized(false)
+								 .build();
+						   //fixme!
+						   val recognition = LocalRecognitionResult.builder()
+									 .audio(text.getBytes())
+									 .quality(0.3f)
+									 .duration(30)
+									 .recognizedText(text)
+									 .speechText("Dummy speech text")
+									 .build();
+						   storageService.addBlackNumber(
+						       dto, Maybe.just(recognition)
+						   );
+					       }
 					   },
 					   error -> {
 					       handler.post(() -> tvSpeech.setText("Failed to process speech"));
@@ -122,6 +174,100 @@ public class WhisperActivity extends AppCompatActivity {
 	    } else {
 		recorder.start(WaveUtil.RECORDING_FILE);
 	    }
+	});
+	btnSendServerData.setOnClickListener(v -> {
+	    assert networkService != null && storageService != null;
+	    assert editPhoneNumber.getText() != null;
+	    val label = String.valueOf(editPhoneNumber.getText());
+	    if (label.isEmpty()) {
+		Toast
+		    .makeText(this, "Number is not provided", Toast.LENGTH_LONG)
+		    .show();
+		return;
+	    }
+	    val localNumber = LocalPhoneNumber.builder()
+				  .number(label)
+				  .owner(label).build()
+				  .asNotSynchronized();
+	    Disposable _thread = storageService
+				     .addBlackNumber(localNumber, Maybe.empty())
+				     .flatMap(_abobus -> {
+					 Disposable thread = storageService.notSyncBlackNumbers()
+								 .subscribe(
+								     (tuple) -> {
+									 val number = tuple.first;
+									 val results = tuple.second;
+									 Disposable disposable = networkService.trySendBlackList(
+									     Pair.create(number, results)
+									 ).subscribe(
+									     ok -> {
+										 handler.post(() -> {
+										     Toast
+											 .makeText(this, "Data is sent", Toast.LENGTH_SHORT)
+											 .show();
+										 });
+									     },
+									     error -> {
+										 handler.post(() -> {
+										     Toast
+											 .makeText(this, "Failed to send data:" + error, Toast.LENGTH_SHORT)
+											 .show();
+										 });
+
+									     },
+									     () -> {
+										 handler.post(() -> {
+										     Toast
+											 .makeText(this, "Server is busy. Sorry", Toast.LENGTH_SHORT)
+											 .show();
+
+										 });
+									     });
+								     },
+								     error -> {
+									 Log.e(TAG, "Abobus");
+								     }
+								 );
+					 return Single.just(thread);
+				     }).subscribe(Disposable::dispose);
+	});
+	btnRetrieveServerData.setOnClickListener(v -> {
+	    assert networkService != null && storageService != null;
+	    Disposable subscription = networkService.tryAccessBlackList()
+					  .subscribe(
+					      numbers -> {
+						  storageService.synchronizeNumbers(numbers);
+					      },
+					      error -> {
+						  handler.post(() -> {
+						      Toast
+							  .makeText(this, "Failed to retrieve server data:" + error, Toast.LENGTH_SHORT)
+							  .show();
+						  });
+					      },
+					      () -> {
+						  handler.post(() -> {
+						      Toast
+							  .makeText(this, "Server is busy. Sorry", Toast.LENGTH_SHORT)
+							  .show();
+						  });
+					      }
+					  );
+	});
+	btnSync.setOnClickListener(v -> {
+	    blackListAdapter.clear();
+	    Disposable d = storageService.allBlackNumbers()
+			       .subscribe(
+				   (List<LocalPhoneNumber> numbers) -> {
+				       val numberList = numbers.stream()
+							    .map(LocalPhoneNumber::getNumber)
+							    .collect(Collectors.toList());
+				       handler.post(() -> blackListAdapter.addAll(numberList));
+				   }, error -> {
+				       Log.e(TAG, "Error :" + error);
+				   });
+
+
 	});
 	String number = getIntent().getStringExtra("number");
 	phoneNum = number == null

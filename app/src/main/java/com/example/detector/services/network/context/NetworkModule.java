@@ -40,17 +40,7 @@ public abstract class NetworkModule {
     @Provides
     public static OkHttpClient webClient() {
 	return new OkHttpClient.Builder()
-		   .addInterceptor(chain -> {
-		       val originalRequest = chain.request();
-		       val url = originalRequest.url().newBuilder()
-				     .scheme("http")
-				     .host("localhost:8081/api/v1.0")
-				     .build();
-		       val updatedRequest = originalRequest.newBuilder()
-						.url(url)
-						.build();
-		       return chain.proceed(updatedRequest);
-		   })
+		   .addInterceptor(chain -> chain.proceed(chain.request()))
 		   .build();
     }
 

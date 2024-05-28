@@ -14,6 +14,7 @@ import com.example.detector.services.storage.model.VoiceRecord;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -51,25 +52,48 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public void addBlackNumber(
+    public Single<?> addBlackNumber(
 	LocalPhoneNumber number,
 	Maybe<LocalRecognitionResult> maybeRecognition
     ) {
 	PhoneNumber entity = toEntity(number);
 	Single<Long> numberSingle = phoneNumberDao
-					.insert(entity.asBlack());
+					.insert(entity.asBlack())
+					.subscribeOn(Schedulers.io());
 	if (number.isSynchronized()) {
-	    val _id = numberSingle.blockingGet();
-	    return;
+	    return numberSingle;
 	}
-	val _id = numberSingle
-		      .zipWith(
-			  maybeRecognition.toSingle(),
-			  (numberId, recognition) -> {
-			      val voiceEntity = toVoiceEntity(numberId, recognition);
-			      return voiceRecordingDao.insert(voiceEntity);
-			  }).blockingGet();
+	return numberSingle
+		   .flatMap(entityId -> {
+		       val result = maybeRecognition.blockingGet();
+		       if (result == null) {
+			   return Single.just(42);
+		       }
+		       val voiceEntity = toVoiceEntity(entityId, result);
+		       return voiceRecordingDao
+				  .insert(voiceEntity);
+		   });
+    }
 
+    @Override
+    public void synchronizeNumbers(List<LocalPhoneNumber> numbers) {
+	for (LocalPhoneNumber number : numbers) {
+	    BlackNumber black = phoneNumberDao.findBlackNumber(number.getNumber())
+				    .blockingGet();
+	    if (black != null) {
+		//number already present locally
+		phoneNumberDao.syncBlackNumber(black.getId());
+	    } else {
+		val entity = PhoneNumber.builder()
+				 .number(black.getNumber())
+				 .owner(black.getNumber())
+				 .isShared(true)
+				 .isSynchronized(true)
+				 .build()
+				 .asBlack();
+		Long l = phoneNumberDao.insert(entity).blockingGet();
+	    }
+	}
     }
 
     @Override
@@ -79,15 +103,20 @@ public class StorageServiceImpl implements StorageService {
     }
 
     @Override
-    public Maybe<LocalPhoneNumber> findBlackNumber(String number) {
+    public Single<Boolean> isBlackNumber(String number) {
 	return phoneNumberDao
-		   .findBlackNumber(number)
-		   .map(this::toDto)
-		   .toMaybe();
+		   .existsBlackNumber(number);
     }
 
     @Override
-    public Flowable<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> findBlackNumbers() {
+    public Maybe<LocalPhoneNumber> findBlackNumber(String number) {
+	return phoneNumberDao
+		   .findBlackNumber(number)
+		   .map(this::toDto);
+    }
+
+    @Override
+    public Flowable<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> notSyncBlackNumbers() {
 	return phoneNumberDao
 		   .notSynchronizedBlackList()
 		   .flatMap(blackNumber -> {
@@ -102,6 +131,14 @@ public class StorageServiceImpl implements StorageService {
 		   });
     }
 
+    @Override
+    public Single<List<LocalPhoneNumber>> allBlackNumbers() {
+	return phoneNumberDao
+		   .allBlackList()
+		   .subscribeOn(Schedulers.io())
+		   .map(phoneNumberMapper::toDtoList);
+    }
+
     private PhoneNumber toEntity(LocalPhoneNumber dto) {
 	return phoneNumberMapper.toEntity(dto);
     }
@@ -109,6 +146,7 @@ public class StorageServiceImpl implements StorageService {
     private LocalPhoneNumber toDto(BlackNumber entity) {
 	return phoneNumberMapper.toDto(entity);
     }
+
 
     private VoiceRecord toVoiceEntity(long id, LocalRecognitionResult dto) {
 	return voiceRecordMapper.toEntity(id, dto);
