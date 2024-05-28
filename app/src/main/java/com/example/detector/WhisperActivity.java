@@ -234,6 +234,11 @@ public class WhisperActivity extends AppCompatActivity {
 	    Disposable subscription = networkService.tryAccessBlackList()
 					  .subscribe(
 					      numbers -> {
+						  handler.post(() -> {
+						      Toast
+							  .makeText(this, "Data is synchronized with server", Toast.LENGTH_LONG)
+							  .show();
+						  });
 						  storageService.synchronizeNumbers(numbers);
 					      },
 					      error -> {

@@ -85,8 +85,8 @@ public class StorageServiceImpl implements StorageService {
 		phoneNumberDao.syncBlackNumber(black.getId());
 	    } else {
 		val entity = PhoneNumber.builder()
-				 .number(black.getNumber())
-				 .owner(black.getNumber())
+				 .number(number.getNumber())
+				 .owner(number.getOwner())
 				 .isShared(true)
 				 .isSynchronized(true)
 				 .build()
