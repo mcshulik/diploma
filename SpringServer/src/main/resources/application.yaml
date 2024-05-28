@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: SpringServer
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate.globally_quoted_identifiers: true
+server:
+  port: 8081
+  address: '0.0.0.0'

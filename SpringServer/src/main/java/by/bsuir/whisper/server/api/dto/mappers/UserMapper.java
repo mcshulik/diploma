@@ -23,18 +23,18 @@ public abstract class UserMapper {
     @Mapping(target = "salt", source = "generator.salt")
     @Mapping(target = "email", source = "dto.email")
     @Mapping(target = "login", source = "dto.login")
-    abstract User toEntity(UpdateUserDto dto, PasswordGenerator generator);
+    public abstract User toEntity(UpdateUserDto dto, PasswordGenerator generator);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "hash", source = "generator.hash")
     @Mapping(target = "salt", source = "generator.salt")
-    abstract User partialUpdate(
+    public abstract User partialUpdate(
 	@MappingTarget User user,
 	UpdateUserDto dto,
 	PasswordGenerator generator
     );
 
-    abstract UserDto toDto(User user);
+    public abstract UserDto toDto(User user);
 
-    abstract List<UserDto> toDtoList(List<User> list);
+    public abstract List<UserDto> toDtoList(List<User> list);
 }

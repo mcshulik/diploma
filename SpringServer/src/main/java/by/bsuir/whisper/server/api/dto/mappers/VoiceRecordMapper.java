@@ -17,10 +17,11 @@ import org.mapstruct.*;
 public abstract class VoiceRecordMapper {
     @Mapping(target = "recorderId", source = "recorder.id")
     @Mapping(target = "modelId", source = "model.id")
-    abstract VoiceRecordDto toDto(VoiceRecord entity);
+    public abstract VoiceRecordDto toDto(VoiceRecord entity);
 
+    @Mapping(target = "number", source = "numberId", qualifiedByName = "getBlockedNumberRef")
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "model", source = "modelId", qualifiedByName = "getRecognitionModelRef")
-    @Mapping(target = "recorder", source = "recorderId", qualifiedByName = "getUserRef")
-    abstract VoiceRecord toEntity(UpdateVoiceRecordDto dto);
+    @Mapping(target = "model", source = "dto.modelId", qualifiedByName = "getRecognitionModelRef")
+    @Mapping(target = "recorder", source = "dto.recorderId", qualifiedByName = "getUserRef")
+    public abstract VoiceRecord toEntity(UpdateVoiceRecordDto dto, long numberId);
 }

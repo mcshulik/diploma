@@ -51,7 +51,7 @@ public class NetworkServiceImpl implements NetworkService {
     @Override
     public Maybe<List<LocalPhoneNumber>> tryAccessBlackList() {
 	val request = new Request.Builder()
-			  .url("http://localhost:8081/api/v1.0/black-list")
+			  .url("http://10.0.2.2:8081/api/v1.0/black-list")
 			  .get()
 			  .build();
 	return sendRequest(request, ServerPhoneNumber[].class)
@@ -68,7 +68,7 @@ public class NetworkServiceImpl implements NetworkService {
 	    val results = numberAndResults.second;
 
 	    val numberRequest = new Request.Builder()
-				    .url("http://localhost:8081/api/v1.0/black-list")
+				    .url("http://10.0.2.2:8081/api/v1.0/black-list")
 				    .post(ofBody(number))
 				    .addHeader(CONTENT_TYPE_HEADER, JSON_TYPE_HEADER)
 				    .build();
@@ -80,7 +80,7 @@ public class NetworkServiceImpl implements NetworkService {
 
 					long resourceId = response.getId();
 					val resultsRequest = new Request.Builder()
-								 .url("http://localhost:8081/api/v1.0/black-list/" + resourceId + "/records")
+								 .url("http://10.0.2.2:8081/api/v1.0/black-list/" + resourceId + "/records")
 								 .post(ofBody(serverResults))
 								 .build();
 					val request = sendRequest(resultsRequest, null);

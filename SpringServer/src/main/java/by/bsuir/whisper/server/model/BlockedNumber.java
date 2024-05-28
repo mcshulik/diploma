@@ -28,7 +28,8 @@ public class BlockedNumber {
     private String owner;
 
     @Column(name = "approve_count", nullable = false)
-    private Long approveCount;
+    @Builder.Default
+    private Long approveCount = 0L;
 
     //The time when
     @Column(name = "registration_time", nullable = false)

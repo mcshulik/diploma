@@ -119,14 +119,19 @@ public class StorageServiceImpl implements StorageService {
     public Flowable<Pair<LocalPhoneNumber, List<LocalRecognitionResult>>> notSyncBlackNumbers() {
 	return phoneNumberDao
 		   .notSynchronizedBlackList()
+		   .subscribeOn(Schedulers.io())
 		   .flatMap(blackNumber -> {
-		       val recordsFlow = voiceRecordingDao
-					     .allNotSynchronizedByBlackNumberId(blackNumber.getId())
-					     .<List<VoiceRecord>>collect(ArrayList::new, List::add)
-					     .map(this::toVoiceDtoList);
+//		       val recordsFlow = voiceRecordingDao
+//					     .allNotSynchronizedByBlackNumberId(blackNumber.getId())
+//					     .<List<VoiceRecord>>collect(ArrayList::new, List::add)
+//					     .map(this::toVoiceDtoList);
+
 		       return Single.just(blackNumber)
 				  .map(this::toDto)
-				  .zipWith(recordsFlow, Pair::create)
+				  .map(number -> {
+				      List<LocalRecognitionResult> list = new ArrayList<>();
+				      return Pair.create(number, list);
+				  })
 				  .toFlowable();
 		   });
     }

@@ -183,53 +183,51 @@ public class WhisperActivity extends AppCompatActivity {
 		Toast
 		    .makeText(this, "Number is not provided", Toast.LENGTH_LONG)
 		    .show();
-		return;
+	    } else {
+		val localNumber = LocalPhoneNumber.builder()
+				      .number(label)
+				      .owner(label).build()
+				      .asNotSynchronized();
+		Disposable _thread = storageService
+					 .addBlackNumber(localNumber, Maybe.empty())
+					 .subscribe();
 	    }
-	    val localNumber = LocalPhoneNumber.builder()
-				  .number(label)
-				  .owner(label).build()
-				  .asNotSynchronized();
-	    Disposable _thread = storageService
-				     .addBlackNumber(localNumber, Maybe.empty())
-				     .flatMap(_abobus -> {
-					 Disposable thread = storageService.notSyncBlackNumbers()
-								 .subscribe(
-								     (tuple) -> {
-									 val number = tuple.first;
-									 val results = tuple.second;
-									 Disposable disposable = networkService.trySendBlackList(
-									     Pair.create(number, results)
-									 ).subscribe(
-									     ok -> {
-										 handler.post(() -> {
-										     Toast
-											 .makeText(this, "Data is sent", Toast.LENGTH_SHORT)
-											 .show();
-										 });
-									     },
-									     error -> {
-										 handler.post(() -> {
-										     Toast
-											 .makeText(this, "Failed to send data:" + error, Toast.LENGTH_SHORT)
-											 .show();
-										 });
+	    Disposable thread = storageService.notSyncBlackNumbers()
+				    .subscribe(
+					(tuple) -> {
+					    val number = tuple.first;
+					    val results = tuple.second;
+					    Disposable disposable = networkService.trySendBlackList(
+						Pair.create(number, results)
+					    ).subscribe(
+						ok -> {
+						    handler.post(() -> {
+							Toast
+							    .makeText(this, "Data is sent", Toast.LENGTH_SHORT)
+							    .show();
+						    });
+						},
+						error -> {
+						    handler.post(() -> {
+							Toast
+							    .makeText(this, "Failed to send data:" + error, Toast.LENGTH_SHORT)
+							    .show();
+						    });
 
-									     },
-									     () -> {
-										 handler.post(() -> {
-										     Toast
-											 .makeText(this, "Server is busy. Sorry", Toast.LENGTH_SHORT)
-											 .show();
+						},
+						() -> {
+						    handler.post(() -> {
+							Toast
+							    .makeText(this, "Server is busy. Sorry", Toast.LENGTH_SHORT)
+							    .show();
 
-										 });
-									     });
-								     },
-								     error -> {
-									 Log.e(TAG, "Abobus");
-								     }
-								 );
-					 return Single.just(thread);
-				     }).subscribe(Disposable::dispose);
+						    });
+						});
+					},
+					error -> {
+					    Log.e(TAG, "Abobus");
+					}
+				    );
 	});
 	btnRetrieveServerData.setOnClickListener(v -> {
 	    assert networkService != null && storageService != null;
