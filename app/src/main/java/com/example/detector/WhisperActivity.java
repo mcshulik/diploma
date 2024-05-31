@@ -1,6 +1,9 @@
 package com.example.detector;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.*;
@@ -15,6 +18,8 @@ import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.detector.asr.Recorder;
@@ -22,13 +27,17 @@ import com.example.detector.asr.RecorderListener;
 import com.example.detector.services.LocalPhoneNumber;
 import com.example.detector.services.LocalRecognitionResult;
 import com.example.detector.services.network.NetworkService;
+import com.example.detector.services.notification.NotificationService;
+import com.example.detector.services.notification.impl.NotificationServiceImpl;
 import com.example.detector.services.storage.StorageService;
 import com.example.detector.services.whisper.WhisperService;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.NoArgsConstructor;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
@@ -52,6 +61,7 @@ public class WhisperActivity extends AppCompatActivity {
     private Button btnSendServerData;
     private Button btnRetrieveServerData;
     private Button btnSync;
+    private Button btnNotify;
     private ListView viewBlackList;
     private EditText editPhoneNumber;
     private MediaRecorder mediaRecorder;
@@ -73,6 +83,8 @@ public class WhisperActivity extends AppCompatActivity {
     public WhisperService whisperService;
     @Inject
     public NetworkService networkService;
+    @Inject
+    public NotificationService notificationService;
 
     private void init() {
 	File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/CallRecordings");
@@ -90,6 +102,8 @@ public class WhisperActivity extends AppCompatActivity {
 	recorder = Recorder.of(directory, this).get();
     }
 
+    private static final String CHANNEL_ID = "voice_call_channel";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
@@ -101,6 +115,8 @@ public class WhisperActivity extends AppCompatActivity {
 	editPhoneNumber = findViewById(R.id.editTextPhone);
 	btnSync = findViewById(R.id.btnSync);
 	viewBlackList = findViewById(R.id.viewBlackList);
+	btnNotify = findViewById(R.id.btnNotify);
+
 	blackListAdapter = new ArrayAdapter<>(
 	    this, android.R.layout.simple_list_item_1, new ArrayList<>()
 	);
@@ -111,7 +127,12 @@ public class WhisperActivity extends AppCompatActivity {
 	    init();
 	}
 	tvSpeech = findViewById(R.id.tvSpeech);
+
 	final Handler handler = new Handler(Looper.getMainLooper());
+	assert notificationService.checkPermissions().isOk();
+	btnNotify.setOnClickListener(v -> {
+	    notificationService.notifyBlackNumber("Abobus");
+	});
 	recorder.setListener(new RecorderListener() {
 	    @Override
 	    public void onStateUpdate(@NonNull RecorderListener.State state, String message) {
@@ -136,6 +157,7 @@ public class WhisperActivity extends AppCompatActivity {
 					       handler.post(() -> tvSpeech.setText(text));
 					       if (isBlack) {
 						   val number = editPhoneNumber.getText().toString();
+						   notificationService.notifyBlackNumber(text);
 						   Toast
 						       .makeText(WhisperActivity.this, "Attention. Robber!", Toast.LENGTH_LONG)
 						       .show();
@@ -272,6 +294,7 @@ public class WhisperActivity extends AppCompatActivity {
 
 
 	});
+
 	String number = getIntent().getStringExtra("number");
 	phoneNum = number == null
 		       ? "Number is not available"
