@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_main"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:gravity="center">
+                                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                                   xmlns:tools="http://schemas.android.com/tools"
+                                                   android:id="@+id/activity_main"
+                                                   android:layout_width="match_parent"
+                                                   android:layout_height="match_parent"
+                                                   android:gravity="center">
 
     <Button
-        android:id="@+id/btn_dial"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Dial"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            android:id="@+id/btn_dial"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dial"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
     <TextView
             android:text="TextView"
             android:layout_width="163dp"
@@ -23,5 +23,65 @@
             app:layout_constraintBottom_toTopOf="@+id/btn_dial"
             app:layout_constraintTop_toTopOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
+    <Button
+            android:text="Send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:id="@+id/btnSendServerData"
+            app:layout_constraintEnd_toStartOf="@+id/viewBlackList"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:layout_marginBottom="260dp" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/btn_dial"/>
+    <Button
+            android:text="RETRIEVE"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@+id/btn_dial"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintVertical_bias="0.116"
+            app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="28dp"
+            app:layout_constraintStart_toEndOf="@+id/viewBlackList" app:layout_constraintHorizontal_bias="1.0"
+            android:id="@+id/btnRetrieveServerData"/>
+    <ListView
+            android:layout_width="143dp"
+            android:layout_height="210dp"
+
+            android:alwaysDrawnWithCache="true"
+            android:dividerHeight="1dp"
+            android:horizontalSpacing="3dp"
+            android:scrollingCache="true"
+            android:smoothScrollbar="true"
+            android:stretchMode="columnWidth"
+            android:verticalSpacing="3dp"
+            android:layout_marginBottom="30dp"
+
+
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintHorizontal_bias="0.406" app:layout_constraintTop_toBottomOf="@+id/btn_dial"
+            app:layout_constraintBottom_toBottomOf="parent" android:id="@+id/viewBlackList"
+            app:layout_constraintVertical_bias="0.541"/>
+    <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="phone"
+            android:ems="10"
+            android:id="@+id/editTextPhone"
+            app:layout_constraintBottom_toTopOf="@+id/btn_dial"
+            android:layout_marginBottom="24dp" app:layout_constraintTop_toBottomOf="@+id/tvSpeech"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintVertical_bias="0.738" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.442" android:minHeight="48dp"
+            android:hint="@string/bottom_sheet_behavior"/>
+    <Button
+            android:text="SYNC"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:id="@+id/btnSync"
+            app:layout_constraintStart_toEndOf="@+id/viewBlackList" android:layout_marginStart="22dp"
+            app:layout_constraintTop_toBottomOf="@+id/btnRetrieveServerData"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"/>
+    <Button
+            android:text="NOTIFY"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:id="@+id/btnNotify"
+            app:layout_constraintEnd_toEndOf="parent" app:layout_constraintStart_toEndOf="@+id/tvSpeech"
+            app:layout_constraintTop_toTopOf="parent" app:layout_constraintBottom_toTopOf="@+id/tvSpeech"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

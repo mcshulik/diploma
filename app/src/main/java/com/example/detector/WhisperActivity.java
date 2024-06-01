@@ -1,37 +1,55 @@
 package com.example.detector;
 
 import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.*;
 import android.os.*;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
+import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.util.Pair;
+import android.view.View;
+import android.widget.*;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.RecyclerView;
 import com.example.detector.asr.Recorder;
 import com.example.detector.asr.RecorderListener;
-import com.example.detector.asr.Whisper;
-import com.example.detector.asr.WhisperListener;
-import com.example.detector.engine.WhisperEngine;
-import com.example.detector.engine.WhisperEngineConfig;
+import com.example.detector.services.LocalPhoneNumber;
+import com.example.detector.services.LocalRecognitionResult;
+import com.example.detector.services.network.NetworkService;
+import com.example.detector.services.notification.NotificationService;
+import com.example.detector.services.notification.impl.NotificationServiceImpl;
 import com.example.detector.services.storage.StorageService;
 import com.example.detector.services.whisper.WhisperService;
-import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
+import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Scheduler;
+import io.reactivex.rxjava3.core.Single;
+import io.reactivex.rxjava3.disposables.Disposable;
+import io.reactivex.rxjava3.schedulers.Schedulers;
 import lombok.NoArgsConstructor;
 import lombok.val;
+import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @AndroidEntryPoint
 @NoArgsConstructor
@@ -40,6 +58,12 @@ public class WhisperActivity extends AppCompatActivity {
     private EditText phoneNumberEditText;
     private String phoneNum;
     volatile Button dialButton;
+    private Button btnSendServerData;
+    private Button btnRetrieveServerData;
+    private Button btnSync;
+    private Button btnNotify;
+    private ListView viewBlackList;
+    private EditText editPhoneNumber;
     private MediaRecorder mediaRecorder;
     private boolean isRecording = false;
     private TelephonyManager telephonyManager;
@@ -49,31 +73,20 @@ public class WhisperActivity extends AppCompatActivity {
     private AudioRecord audioRecord;
     private AudioTrack audioTrack;
     private MediaPlayer mediaPlayer;
-    private Whisper whisper;
+    private ArrayAdapter<String> blackListAdapter;
     private Recorder recorder;
     private TextView tvSpeech;
-    public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
-    public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
     private boolean isInitialized = false;
-
     @Inject
-    public WhisperActivity(StorageService storageService, WhisperService whisperService) {
-	val tuple = storageService.findBlackNumbers().blockingFirst();
-    }
+    public StorageService storageService;
+    @Inject
+    public WhisperService whisperService;
+    @Inject
+    public NetworkService networkService;
+    @Inject
+    public NotificationService notificationService;
 
     private void init() {
-	FileUtils.copyAssetFiles(this, I8N_LANG_VOC, I8N_MODEL_NAME);
-	val engineConfig = WhisperEngineConfig.builder()
-			       .type(WhisperEngine.Type.NATIVE)
-			       .isMultiLang(true)
-			       .modelPath(resolveAssetPath(I8N_MODEL_NAME))
-			       .vocabPath(resolveAssetPath(I8N_LANG_VOC))
-			       .build();
-//	var engineConfig = WhisperEngineConfig.builder()
-//			 .isMultiLang(false)
-//			 .modelPath(resolveAssetPath("whisper-tiny-en.tflite"))
-//			 .vocabPath(resolveAssetPath("filters_vocab_en.bin"))
-//			 .build();
 	File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/CallRecordings");
 	String directory = getFilesDir().getAbsolutePath();
 	if (!folder.exists()) {
@@ -86,44 +99,39 @@ public class WhisperActivity extends AppCompatActivity {
 	if (folder.exists()) {
 	    directory = folder.getAbsolutePath();
 	}
-	whisper = Whisper.of(engineConfig).get();
 	recorder = Recorder.of(directory, this).get();
     }
+
+    private static final String CHANNEL_ID = "voice_call_channel";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 	super.onCreate(savedInstanceState);
 	setContentView(R.layout.activity_main);
+
 	dialButton = findViewById(R.id.btn_dial);
-	final String[] permissions;
-	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
-	} else {
-	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
-	}
+	btnSendServerData = findViewById(R.id.btnSendServerData);
+	btnRetrieveServerData = findViewById(R.id.btnRetrieveServerData);
+	editPhoneNumber = findViewById(R.id.editTextPhone);
+	btnSync = findViewById(R.id.btnSync);
+	viewBlackList = findViewById(R.id.viewBlackList);
+	btnNotify = findViewById(R.id.btnNotify);
+
+	blackListAdapter = new ArrayAdapter<>(
+	    this, android.R.layout.simple_list_item_1, new ArrayList<>()
+	);
+	viewBlackList.setAdapter(blackListAdapter);
+	final String[] permissions = getPermissions();
 	ActivityCompat.requestPermissions(this, permissions, PERMISSION_REQUEST_CODE);
 	if (!isInitialized) {
 	    init();
 	}
 	tvSpeech = findViewById(R.id.tvSpeech);
-	final Handler handler = new Handler(Looper.getMainLooper());
-	whisper.setListener(new WhisperListener() {
-	    @Override
-	    public void onState(WhisperListener.State state, String message) {
-		Log.d(TAG, "Update is received, Message: " + message);
-		if (state == State.START) {
-		    handler.post(() -> tvSpeech.setText(""));
-		}
-		if (state == State.DONE) {
-		    handler.post(() -> tvSpeech.setText(""));
-		}
-	    }
 
-	    @Override
-	    public void onResult(String result) {
-		Log.d(TAG, "Result: " + result);
-		handler.post(() -> tvSpeech.append(result));
-	    }
+	final Handler handler = new Handler(Looper.getMainLooper());
+	assert notificationService.checkPermissions().isOk();
+	btnNotify.setOnClickListener(v -> {
+	    notificationService.notifyBlackNumber("Abobus");
 	});
 	recorder.setListener(new RecorderListener() {
 	    @Override
@@ -142,7 +150,41 @@ public class WhisperActivity extends AppCompatActivity {
 
 	    @Override
 	    public void onDataUpdate(float[] samples) {
-		whisper.writeBuffer(samples);
+		Disposable value = whisperService.transcript(samples)
+				       .subscribe(text -> {
+					       boolean isBlack
+						   = storageService.isBlackNumber(text).blockingGet();
+					       handler.post(() -> tvSpeech.setText(text));
+					       if (isBlack) {
+						   val number = editPhoneNumber.getText().toString();
+						   notificationService.notifyBlackNumber(text);
+						   Toast
+						       .makeText(WhisperActivity.this, "Attention. Robber!", Toast.LENGTH_LONG)
+						       .show();
+						   val dto = LocalPhoneNumber.builder()
+								 .owner(number)
+								 .number(number)
+								 .isSynchronized(false)
+								 .build();
+						   //fixme!
+						   val recognition = LocalRecognitionResult.builder()
+									 .audio(text.getBytes())
+									 .quality(0.3f)
+									 .duration(30)
+									 .recognizedText(text)
+									 .speechText("Dummy speech text")
+									 .build();
+						   storageService.addBlackNumber(
+						       dto, Maybe.just(recognition)
+						   );
+					       }
+					   },
+					   error -> {
+					       handler.post(() -> tvSpeech.setText("Failed to process speech"));
+					   },
+					   () -> {
+					       handler.post(() -> tvSpeech.setText("No data available"));
+					   });
 	    }
 	});
 	checkRecordPermission();
@@ -155,12 +197,121 @@ public class WhisperActivity extends AppCompatActivity {
 		recorder.start(WaveUtil.RECORDING_FILE);
 	    }
 	});
+	btnSendServerData.setOnClickListener(v -> {
+	    assert networkService != null && storageService != null;
+	    assert editPhoneNumber.getText() != null;
+	    val label = String.valueOf(editPhoneNumber.getText());
+	    if (label.isEmpty()) {
+		Toast
+		    .makeText(this, "Number is not provided", Toast.LENGTH_LONG)
+		    .show();
+	    } else {
+		val localNumber = LocalPhoneNumber.builder()
+				      .number(label)
+				      .owner(label).build()
+				      .asNotSynchronized();
+		Disposable _thread = storageService
+					 .addBlackNumber(localNumber, Maybe.empty())
+					 .subscribe();
+	    }
+	    Disposable thread = storageService.notSyncBlackNumbers()
+				    .subscribe(
+					(tuple) -> {
+					    val number = tuple.first;
+					    val results = tuple.second;
+					    Disposable disposable = networkService.trySendBlackList(
+						Pair.create(number, results)
+					    ).subscribe(
+						ok -> {
+						    handler.post(() -> {
+							Toast
+							    .makeText(this, "Data is sent", Toast.LENGTH_SHORT)
+							    .show();
+						    });
+						},
+						error -> {
+						    handler.post(() -> {
+							Toast
+							    .makeText(this, "Failed to send data:" + error, Toast.LENGTH_SHORT)
+							    .show();
+						    });
+
+						},
+						() -> {
+						    handler.post(() -> {
+							Toast
+							    .makeText(this, "Server is busy. Sorry", Toast.LENGTH_SHORT)
+							    .show();
+
+						    });
+						});
+					},
+					error -> {
+					    Log.e(TAG, "Abobus");
+					}
+				    );
+	});
+	btnRetrieveServerData.setOnClickListener(v -> {
+	    assert networkService != null && storageService != null;
+	    Disposable subscription = networkService.tryAccessBlackList()
+					  .subscribe(
+					      numbers -> {
+						  handler.post(() -> {
+						      Toast
+							  .makeText(this, "Data is synchronized with server", Toast.LENGTH_LONG)
+							  .show();
+						  });
+						  storageService.synchronizeNumbers(numbers);
+					      },
+					      error -> {
+						  handler.post(() -> {
+						      Toast
+							  .makeText(this, "Failed to retrieve server data:" + error, Toast.LENGTH_SHORT)
+							  .show();
+						  });
+					      },
+					      () -> {
+						  handler.post(() -> {
+						      Toast
+							  .makeText(this, "Server is busy. Sorry", Toast.LENGTH_SHORT)
+							  .show();
+						  });
+					      }
+					  );
+	});
+	btnSync.setOnClickListener(v -> {
+	    blackListAdapter.clear();
+	    Disposable d = storageService.allBlackNumbers()
+			       .subscribe(
+				   (List<LocalPhoneNumber> numbers) -> {
+				       val numberList = numbers.stream()
+							    .map(LocalPhoneNumber::getNumber)
+							    .collect(Collectors.toList());
+				       handler.post(() -> blackListAdapter.addAll(numberList));
+				   }, error -> {
+				       Log.e(TAG, "Error :" + error);
+				   });
+
+
+	});
+
 	String number = getIntent().getStringExtra("number");
 	phoneNum = number == null
 		       ? "Number is not available"
 		       : number;
 //        dialButton.setOnClickListener(v -> startCallRecording());
 
+    }
+
+    @NotNull
+    private static String[] getPermissions() {
+	final String[] permissions;
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.READ_PHONE_NUMBERS, Manifest.permission.READ_CALL_LOG, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
+	} else {
+	    permissions = new String[]{Manifest.permission.CALL_PHONE, Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_PHONE_STATE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAPTURE_AUDIO_OUTPUT};
+	}
+	return permissions;
     }
 
     private void startCallRecording() {
@@ -290,21 +441,13 @@ public class WhisperActivity extends AppCompatActivity {
     protected void onDestroy() {
 	super.onDestroy();
 	stopCallRecording();
-	whisper.close();
+	whisperService.dispose();
 	// Убираем слушателя при уничтожении активности
 	if (telephonyManager != null && phoneStateListener != null) {
 	    telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
 	}
     }
 
-    private @NonNull String resolveAssetPath(String assetName) {
-	File outfile = new File(getFilesDir(), assetName);
-	if (!outfile.exists()) {
-	    Log.d(TAG, "File not found - " + outfile.getAbsolutePath());
-	}
-	Log.d(TAG, "Returned asset path: " + outfile.getAbsolutePath());
-	return outfile.getAbsolutePath();
-    }
 
     private void checkRecordPermission() {
 	int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO);

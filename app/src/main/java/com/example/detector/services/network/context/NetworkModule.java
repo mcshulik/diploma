@@ -1,6 +1,6 @@
 package com.example.detector.services.network.context;
 
-import androidx.core.view.ViewCompat;
+import com.example.detector.services.UserInfo;
 import com.example.detector.services.network.NetworkService;
 import com.example.detector.services.network.impl.NetworkServiceImpl;
 import com.example.detector.services.network.mappers.PhoneNumberMapper;
@@ -16,7 +16,6 @@ import lombok.val;
 import okhttp3.OkHttpClient;
 import org.mapstruct.factory.Mappers;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 /**
@@ -32,19 +31,16 @@ public abstract class NetworkModule {
     }
 
     @Provides
+    public static UserInfo userInfo() {
+	return UserInfo.builder()
+		   .id(1)
+		   .build();
+    }
+
+    @Provides
     public static OkHttpClient webClient() {
 	return new OkHttpClient.Builder()
-		   .addInterceptor(chain -> {
-		       val originalRequest = chain.request();
-		       val url = originalRequest.url().newBuilder()
-				     .scheme("http")
-				     .host("localhost:8081/api/v1.0")
-				     .build();
-		       val updatedRequest = originalRequest.newBuilder()
-						.url(url)
-						.build();
-		       return chain.proceed(updatedRequest);
-		   })
+		   .addInterceptor(chain -> chain.proceed(chain.request()))
 		   .build();
     }
 

@@ -3,6 +3,7 @@ package com.example.detector.utils;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.util.Log;
+import androidx.annotation.NonNull;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -18,6 +19,15 @@ import java.io.InputStream;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class FileUtils {
     public static final String TAG = "FileUtils";
+
+    public static @NonNull String resolveAssetPath(Context context, String assetName) {
+	File outfile = new File(context.getFilesDir(), assetName);
+	if (!outfile.exists()) {
+	    Log.d(TAG, "File not found - " + outfile.getAbsolutePath());
+	}
+	Log.d(TAG, "Returned asset path: " + outfile.getAbsolutePath());
+	return outfile.getAbsolutePath();
+    }
 
     public static void copyAssetFiles(Context context, String... files) {
 	AssetManager assetManager = context.getAssets();

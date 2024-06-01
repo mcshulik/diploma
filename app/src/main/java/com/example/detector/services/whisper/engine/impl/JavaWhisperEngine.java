@@ -1,16 +1,13 @@
-package com.example.detector.engine.impl;
+package com.example.detector.services.whisper.engine.impl;
 
 import android.util.Log;
-import com.example.detector.asr.WhisperListener;
-import com.example.detector.engine.ResourceNotFoundException;
-import com.example.detector.engine.WhisperEngine;
-import com.example.detector.engine.WhisperEngineConfig;
-import com.example.detector.utils.WaveUtil;
+import com.example.detector.services.whisper.engine.ResourceNotFoundException;
+import com.example.detector.services.whisper.engine.WhisperEngine;
+import com.example.detector.services.whisper.engine.WhisperEngineConfig;
 import com.example.detector.utils.WhisperUtil;
-import com.google.errorprone.annotations.ThreadSafe;
+import lombok.val;
 import org.tensorflow.lite.DataType;
 import org.tensorflow.lite.Interpreter;
-import org.tensorflow.lite.InterpreterApi;
 import org.tensorflow.lite.Tensor;
 import org.tensorflow.lite.support.tensorbuffer.TensorBuffer;
 
@@ -20,14 +17,13 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Optional;
 
 @NotThreadSafe
 public class JavaWhisperEngine implements WhisperEngine {
     private final String TAG = "WhisperEngineJava";
     private final Interpreter interpreter;
     private final WhisperUtil params;
-    private final AtomicReference<WhisperListener> listenerRef = new AtomicReference<>();
 
     public JavaWhisperEngine(WhisperEngineConfig config) {
 	WhisperUtil params = new WhisperUtil();
@@ -51,45 +47,30 @@ public class JavaWhisperEngine implements WhisperEngine {
     }
 
     @Override
-    public void setListener(WhisperListener listener) {
-	listenerRef.set(listener);
-    }
-
-    @Override
-    public String transcribeFile(String wavePath) {
-	// Calculate Mel spectrogram
-	Log.d(TAG, "Calculating Mel spectrogram...");
-	float[] samples = WaveUtil.getSamples(wavePath);
-	Log.d(TAG, "Mel spectrogram is calculated...!");
-
-	// Perform inference
-	String result = runInference(samples);
-	Log.d(TAG, "Inference is executed...!");
-
-	return result;
-    }
-
-    @Override
-    public String transcribeBuffer(float[] samples) {
-	float[] melSpectrogram = getMelSpectrogram(samples);
-	return runInference(melSpectrogram);
+    public Optional<String> transcribeBuffer(float[] samples) {
+	final float[] melSpectrogram = getMelSpectrogram(samples);
+	String msg = runInference(melSpectrogram);
+	if (msg.isEmpty()) {
+	    return Optional.empty();
+	}
+	return Optional.of(msg);
     }
 
     // Load TFLite model
     private Interpreter loadModel(String modelPath) throws IOException {
-	FileInputStream fileInputStream = new FileInputStream(modelPath);
-	FileChannel fileChannel = fileInputStream.getChannel();
-	long startOffset = 0;
-	long declaredLength = fileChannel.size();
-	ByteBuffer model = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
-	// Set the number of threads for inference
-	Interpreter.Options options = new Interpreter.Options();
-	options.setNumThreads(Runtime.getRuntime().availableProcessors());
-	return new Interpreter(model, options);
+	try (val inputStream = new FileInputStream(modelPath)) {
+	    FileChannel fileChannel = inputStream.getChannel();
+	    long startOffset = 0;
+	    long declaredLength = fileChannel.size();
+	    ByteBuffer model = fileChannel.map(FileChannel.MapMode.READ_ONLY, startOffset, declaredLength);
+	    // Set the number of threads for inference
+	    Interpreter.Options options = new Interpreter.Options();
+	    options.setNumThreads(Runtime.getRuntime().availableProcessors());
+	    return new Interpreter(model, options);
+	}
     }
 
     private float[] getMelSpectrogram(float[] samples) {
-
 	int fixedInputSize = WhisperUtil.WHISPER_SAMPLE_RATE * WhisperUtil.WHISPER_CHUNK_SIZE;
 	float[] inputSamples = new float[fixedInputSize];
 	int copyLength = Math.min(samples.length, fixedInputSize);

@@ -151,7 +151,7 @@ public class Recorder {
 	String fullName = directory.getAbsolutePath() + "/" + fileName;
 	mExecutorThread = new Thread(() -> {
 	    mInProgress.set(true);
-	    threadFunction(fullName);
+	    listen(fullName);
 	    mInProgress.set(false);
 	});
 	mExecutorThread.start();
@@ -174,8 +174,8 @@ public class Recorder {
 	return currentPhoneNumber.get() != null && !isInProgress();
     }
 
-    public void stop() {
-	mInProgress.set(false);
+    public boolean stop() {
+	val wasRunning = mInProgress.getAndSet(false);
 	currentPhoneNumber.set(null);
 	sendState(State.STOP);
 	try {
@@ -186,6 +186,7 @@ public class Recorder {
 	} catch (InterruptedException e) {
 	    throw new RuntimeException(e);
 	}
+	return wasRunning;
     }
 
     public boolean isInProgress() {
@@ -221,7 +222,7 @@ public class Recorder {
 	return samples;
     }
 
-    private void threadFunction(String fileName) {
+    private void listen(@Nullable String fileName) {
 	try {
 	    if (ActivityCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
 		return;
@@ -300,9 +301,11 @@ public class Recorder {
 	    audioRecord.release();
 
 	    // Save 30 seconds of recording buffer in wav file
-	    WaveUtil.createWaveFile(fileName, output.toByteArray(), sampleRateInHz, channels, bytesPerSample);
-	    Log.d(TAG, "Recorded file: " + fileName);
-	    sendState(State.DONE, "File saved at " + fileName);
+	    if (fileName != null) {
+		WaveUtil.createWaveFile(fileName, output.toByteArray(), sampleRateInHz, channels, bytesPerSample);
+		Log.d(TAG, "Recorded file: " + fileName);
+		sendState(State.DONE, "File saved at " + fileName);
+	    }
 	} catch (Exception e) {
 	    Log.e(TAG, "Error...", e);
 	    sendState(State.STOP, e.getMessage());

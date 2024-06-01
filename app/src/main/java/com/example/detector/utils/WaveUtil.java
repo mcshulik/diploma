@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 
 public class WaveUtil {
     public static final String TAG = "WaveUtil";
@@ -44,7 +45,7 @@ public class WaveUtil {
         }
     }
 
-    public static float[] getSamples(String filePath) {
+    public static Optional<float[]> getSamples(String filePath) {
         try {
             FileInputStream fileInputStream = new FileInputStream(filePath);
 
@@ -56,7 +57,7 @@ public class WaveUtil {
             String headerStr = new String(header, 0, 4);
             if (!headerStr.equals("RIFF")) {
                 System.err.println("Not a valid WAV file");
-                return new float[0];
+                return Optional.empty();
             }
 
             // Get the audio format details from the header
@@ -64,7 +65,7 @@ public class WaveUtil {
             int bitsPerSample = byteArrayToNumber(header, 34, 2);
             if (bitsPerSample != 16 && bitsPerSample != 32) {
                 System.err.println("Unsupported bits per sample: " + bitsPerSample);
-                return new float[0];
+                return Optional.empty();
             }
 
             // Get the size of the data section (all PCM data)
@@ -76,7 +77,7 @@ public class WaveUtil {
 
             // Read the audio data
             byte[] audioData = new byte[dataLength];
-            fileInputStream.read(audioData);
+            int cbRead = fileInputStream.read(audioData);
             ByteBuffer byteBuffer = ByteBuffer.wrap(audioData);
             byteBuffer.order(ByteOrder.nativeOrder());
 
@@ -91,13 +92,12 @@ public class WaveUtil {
                     samples[i] = byteBuffer.getFloat();
                 }
             }
-
-            return samples;
+            return Optional.of(samples);
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(TAG, "Error...", e);
         }
-        return new float[0];
+        return Optional.empty();
     }
 
     // Convert a portion of a byte array into an integer or a short

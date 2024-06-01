@@ -53,4 +53,8 @@ public class VoiceRecord {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recognition_model_id", nullable = false)
     private RecognitionModel model;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "number_id", nullable = false)
+    private BlockedNumber number;
 }

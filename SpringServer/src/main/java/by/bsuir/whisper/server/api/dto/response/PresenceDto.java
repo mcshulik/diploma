@@ -9,6 +9,14 @@ public record PresenceDto(boolean isPresent) {
 	return new PresenceDto(isDeleted);
     }
 
+    public static PresenceDto exists() {
+	return new PresenceDto(true);
+    }
+
+    public static PresenceDto empty() {
+	return new PresenceDto(false);
+    }
+
     public PresenceDto ifPresent(Runnable task) {
 	if (isPresent) {
 	    task.run();

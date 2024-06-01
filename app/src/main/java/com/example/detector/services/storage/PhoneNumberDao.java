@@ -8,6 +8,7 @@ import com.example.detector.services.storage.model.BlackNumber;
 import com.example.detector.services.storage.model.PhoneNumber;
 import com.example.detector.services.storage.model.WhiteNumber;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 import java.util.List;
@@ -25,10 +26,13 @@ public interface PhoneNumberDao {
     Single<List<BlackNumber>> allBlackList();
 
     @Query("select * from white_list")
-    Single<List<WhiteNumber>> allWhiteList();
+    Flowable<WhiteNumber> allWhiteList();
 
     @Query("select * from black_list where isSynchronized = 0")
     Flowable<BlackNumber> notSynchronizedBlackList();
+
+    @Query("update phone_number set isSynchronized = 1 where id = :numberId")
+    void syncBlackNumber(long numberId);
 
     @Query("delete from phone_number where number = :number and numberType = 1")
     void deleteWhiteByNumber(String number);
@@ -43,5 +47,5 @@ public interface PhoneNumberDao {
     Single<Boolean> existsBlackNumber(String number);
 
     @Query("select * from black_list where number = :number")
-    Single<BlackNumber> findBlackNumber(String number);
+    Maybe<BlackNumber> findBlackNumber(String number);
 }
