@@ -5,11 +5,13 @@ import com.example.detector.services.LocalPhoneNumber;
 import com.example.detector.services.LocalRecognitionResult;
 import com.example.detector.services.storage.PhoneNumberDao;
 import com.example.detector.services.storage.StorageService;
+import com.example.detector.services.storage.SuspiciousKeywordDao;
 import com.example.detector.services.storage.VoiceRecordDao;
 import com.example.detector.services.storage.mappers.PhoneNumberMapper;
 import com.example.detector.services.storage.mappers.VoiceRecordMapper;
 import com.example.detector.services.storage.model.BlackNumber;
 import com.example.detector.services.storage.model.PhoneNumber;
+import com.example.detector.services.storage.model.SuspiciousKeyword;
 import com.example.detector.services.storage.model.VoiceRecord;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
@@ -21,7 +23,11 @@ import lombok.val;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Paval Shlyk
@@ -36,6 +42,23 @@ public class StorageServiceImpl implements StorageService {
     private final VoiceRecordDao voiceRecordingDao;
     private final VoiceRecordMapper voiceRecordMapper;
     private final PhoneNumberMapper phoneNumberMapper;
+    private final SuspiciousKeywordDao suspiciousKeywordDao;
+
+    @Inject
+    public void initDataBase() {
+	Stream
+	    .of("bank", "robber", "credit", "kill", "victim", "aboba")
+	    .map(keyword -> SuspiciousKeyword.builder().keyword(keyword))
+	    .map(SuspiciousKeyword.SuspiciousKeywordBuilder::build)
+	    .forEach(suspiciousKeywordDao::insert);
+    }
+
+    private List<String> keywords() {
+	return Arrays.asList(
+	    "bank", "robber", "credit", "kill", "victim", "aboba",
+	    "murder", "assassin", "fuck"
+	);
+    }
 
     @Override
     public void addWhiteNumber(String number) {
@@ -106,6 +129,13 @@ public class StorageServiceImpl implements StorageService {
     public Single<Boolean> isBlackNumber(String number) {
 	return phoneNumberDao
 		   .existsBlackNumber(number);
+    }
+
+    @Override
+    public Single<Boolean> isSuspiciousText(String text) {
+	boolean isSuspicious = keywords().stream()
+				   .anyMatch(text::contains);
+	return Single.just(isSuspicious);
     }
 
     @Override

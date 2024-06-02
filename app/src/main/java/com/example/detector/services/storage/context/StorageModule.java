@@ -1,9 +1,11 @@
 package com.example.detector.services.storage.context;
 
 import android.content.Context;
+import androidx.room.PrimaryKey;
 import androidx.room.Room;
 import com.example.detector.services.storage.PhoneNumberDao;
 import com.example.detector.services.storage.StorageService;
+import com.example.detector.services.storage.SuspiciousKeywordDao;
 import com.example.detector.services.storage.VoiceRecordDao;
 import com.example.detector.services.storage.impl.StorageServiceImpl;
 import com.example.detector.services.storage.mappers.PhoneNumberMapper;
@@ -63,6 +65,12 @@ public abstract class StorageModule {
 	@Singleton
 	public VoiceRecordDao voiceRecordDao(DatabaseSchema schema) {
 	    return schema.voiceRecordDao();
+	}
+
+	@Provides
+	@Singleton
+	public SuspiciousKeywordDao suspiciousKeywordDao(DatabaseSchema schema) {
+	    return schema.suspiciousKeywordDao();
 	}
     }
 

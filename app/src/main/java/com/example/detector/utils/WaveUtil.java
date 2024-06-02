@@ -1,13 +1,16 @@
 package com.example.detector.utils;
 
 import android.util.Log;
+import lombok.val;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.Optional;
 
 public class WaveUtil {
@@ -18,7 +21,7 @@ public class WaveUtil {
         try {
             int dataSize = samples.length; // actual data size in bytes
             int audioFormat = (bytesPerSample == 2) ? 1 : (bytesPerSample == 4) ? 3 : 0; // PCM_16 = 1, PCM_FLOAT = 3
-
+            val isDeleted = new File(filePath).delete();
             FileOutputStream fileOutputStream = new FileOutputStream(filePath);
             fileOutputStream.write("RIFF".getBytes(StandardCharsets.UTF_8)); // Write the "RIFF" chunk descriptor
             fileOutputStream.write(intToByteArray(36 + dataSize), 0, 4); // Total file size - 8 bytes

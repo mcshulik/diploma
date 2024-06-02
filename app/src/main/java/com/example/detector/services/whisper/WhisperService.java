@@ -1,6 +1,7 @@
 package com.example.detector.services.whisper;
 
 import io.reactivex.rxjava3.core.Maybe;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 
 import java.io.File;
@@ -12,5 +13,5 @@ import java.io.File;
 public interface WhisperService extends Disposable {
     Maybe<String> transcript(float[] samples);
 
-    Maybe<String> transcript(File file);
+    Single<String> transcript(File file);
 }

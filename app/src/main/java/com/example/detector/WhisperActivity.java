@@ -31,6 +31,7 @@ import com.example.detector.services.notification.NotificationService;
 import com.example.detector.services.notification.impl.NotificationServiceImpl;
 import com.example.detector.services.storage.StorageService;
 import com.example.detector.services.whisper.WhisperService;
+import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
 import dagger.hilt.android.AndroidEntryPoint;
 import io.reactivex.rxjava3.core.Maybe;
@@ -152,15 +153,18 @@ public class WhisperActivity extends AppCompatActivity {
 	    public void onDataUpdate(float[] samples) {
 		Disposable value = whisperService.transcript(samples)
 				       .subscribe(text -> {
-					       boolean isBlack
-						   = storageService.isBlackNumber(text).blockingGet();
 					       handler.post(() -> tvSpeech.setText(text));
-					       if (isBlack) {
+					       boolean _isBlack
+						   = storageService.isBlackNumber(text).blockingGet();
+					       final boolean isRobber = storageService.isSuspiciousText(text).blockingGet();
+					       if (isRobber) {
 						   val number = editPhoneNumber.getText().toString();
-						   notificationService.notifyBlackNumber(text);
-						   Toast
-						       .makeText(WhisperActivity.this, "Attention. Robber!", Toast.LENGTH_LONG)
-						       .show();
+						   notificationService.notifyBlackNumber("+375-28-25-100-25");
+						   handler.post(() -> {
+						       Toast
+							   .makeText(WhisperActivity.this, "Attention. Robber!", Toast.LENGTH_LONG)
+							   .show();
+						   });
 						   val dto = LocalPhoneNumber.builder()
 								 .owner(number)
 								 .number(number)

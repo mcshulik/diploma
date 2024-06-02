@@ -3,6 +3,7 @@ package com.example.detector.services.storage;
 import android.util.Pair;
 import com.example.detector.services.LocalPhoneNumber;
 import com.example.detector.services.LocalRecognitionResult;
+import com.google.android.material.internal.ScrimInsetsFrameLayout;
 import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
@@ -22,10 +23,11 @@ public interface StorageService {
 
     Single<Boolean> isBlackNumber(String number);
 
+    Single<Boolean> isSuspiciousText(String text);
+
     Single<?> addBlackNumber(LocalPhoneNumber number, Maybe<LocalRecognitionResult> recognition);
 
     void synchronizeNumbers(List<LocalPhoneNumber> numbers);
-
 
     Maybe<LocalPhoneNumber> findBlackNumber(String number);
 
