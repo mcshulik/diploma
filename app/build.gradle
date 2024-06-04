@@ -20,6 +20,11 @@ android {
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64'
         }
+        javaCompileOptions {
+            annotationProcessorOptions {
+//                arguments += ["room.schemaLocation": "$projectDir/services/storage/context".toString()]
+            }
+        }
     }
     sourceSets {
         main {
@@ -43,7 +48,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-//            path "src/main/cpp/CMakeLists.txt"
+            path "src/main/cpp/CMakeLists.txt"
         }
     }
     compileOptions {
@@ -54,7 +59,6 @@ android {
         jvmTarget = '1.8'
     }
 }
-
 
 dependencies {
 

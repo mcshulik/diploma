@@ -43,7 +43,9 @@ public class NativeWhisperEngine implements WhisperEngine {
     static {
 	System.loadLibrary("audioEngine");
     }
-
+    public String transcribeFile(String waveFile) {
+	return transcribeFile(nativePtr, waveFile);
+    }
     // Native methods
     private native long createTFLiteEngine();
 

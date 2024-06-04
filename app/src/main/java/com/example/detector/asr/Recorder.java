@@ -51,6 +51,10 @@ public class Recorder {
 	context = config.context();
 	directory = config.directory();
 	telephony = config.telephony();
+	if (!directory.mkdirs()) {
+	    val msg = "Failed to create recording directory: " + directory;
+	    Log.e(TAG, msg);
+	}
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
 	    telephony.registerTelephonyCallback(context.getMainExecutor(), callStateListener);
 	    IntentFilter filter = new IntentFilter();
@@ -229,8 +233,8 @@ public class Recorder {
 	    }
 	    int channels = 1;
 	    int bytesPerSample = 2;
-//	    int sampleRateInHz = 16000;
-	    int sampleRateInHz = 44100;
+	    int sampleRateInHz = 16000;
+//	    int sampleRateInHz = 44100;
 	    int channelConfig = AudioFormat.CHANNEL_IN_MONO; // as per channels
 	    int audioFormat = AudioFormat.ENCODING_PCM_16BIT; // as per bytesPerSample
 	    int audioSource = MediaRecorder.AudioSource.MIC;
@@ -273,14 +277,14 @@ public class Recorder {
 		if (timer != timer_tmp) {
 		    timer = timer_tmp;
 
-		    // Transcribe realtime buffer after every 2 seconds
-		    if (timer % 2 == 0) {
+		    // Transcribe realtime buffer after every 3 seconds
+		    if (timer % 3 == 0) {
 			// Flip the buffer for reading
 			bufferRealtime.flip();
 			bufferRealtime.order(ByteOrder.nativeOrder());
 
 			// Create a sample array to hold the converted data
-			float[] samples = getBufferedSamples(bufferRealtime.remaining() / 2);
+			float[] samples = new float[bufferRealtime.remaining() / 2];
 //			float[] samples = new float[bufferRealtime.remaining() / 2];
 
 			// Convert ByteBuffer to short array
