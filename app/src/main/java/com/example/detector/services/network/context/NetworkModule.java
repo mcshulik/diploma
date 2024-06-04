@@ -38,7 +38,7 @@ public abstract class NetworkModule {
     @Provides
     public static ServerInfo serverInfo() {
 	return ServerInfo.builder()
-//		   .baseUrl("http://192.168.64.100:8081/api/v1.0")
+//		   .baseUrl("http://192.168.75.100:8081/api/v1.0")
 		   .baseUrl("http://192.168.50.14:8081/api/v1.0")
 		   .build();
     }

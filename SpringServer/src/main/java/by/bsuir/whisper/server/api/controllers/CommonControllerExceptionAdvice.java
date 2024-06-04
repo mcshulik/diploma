@@ -1,10 +1,7 @@
 package by.bsuir.whisper.server.api.controllers;
 
 import by.bsuir.whisper.server.api.dto.response.ErrorDto;
-import by.bsuir.whisper.server.api.exceptions.ResourceBusyException;
-import by.bsuir.whisper.server.api.exceptions.ResourceException;
-import by.bsuir.whisper.server.api.exceptions.ResourceModifyingException;
-import by.bsuir.whisper.server.api.exceptions.ResourceNotFoundException;
+import by.bsuir.whisper.server.api.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +30,11 @@ public class CommonControllerExceptionAdvice {
     @ExceptionHandler({ResourceModifyingException.class})
     public ResponseEntity<ErrorDto> catchModifyingException(ResourceModifyingException e) {
 	return errorOf(HttpStatus.FORBIDDEN, e);
+    }
+
+    @ExceptionHandler({ResourceAlreadyExistsException.class})
+    public ResponseEntity<ErrorDto> catchResourceAlreadyExists(ResourceAlreadyExistsException e) {
+	return errorOf(HttpStatus.CONFLICT, e);
     }
 
     @ExceptionHandler({HttpRequestMethodNotSupportedException.class})

@@ -5,7 +5,10 @@ import by.bsuir.whisper.server.api.dto.mappers.VoiceRecordMapper;
 import by.bsuir.whisper.server.api.dto.request.UpdateVoiceRecordDto;
 import by.bsuir.whisper.server.api.dto.response.BlockedNumberDto;
 import by.bsuir.whisper.server.api.dto.response.VoiceRecordDto;
+import by.bsuir.whisper.server.api.exceptions.ResourceAlreadyExistsException;
+import by.bsuir.whisper.server.api.exceptions.ResourceModifyingException;
 import by.bsuir.whisper.server.context.CatchLevel;
+import by.bsuir.whisper.server.context.CatchThrows;
 import by.bsuir.whisper.server.dao.BlockedNumberRepository;
 import by.bsuir.whisper.server.dao.VoiceRecordRepository;
 import by.bsuir.whisper.server.model.BlockedNumber;
@@ -13,9 +16,12 @@ import by.bsuir.whisper.server.model.UpdateBlockedNumberDto;
 import by.bsuir.whisper.server.model.VoiceRecord;
 import by.bsuir.whisper.server.services.BlackListService;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -54,8 +60,18 @@ public class BlackListServiceImpl implements BlackListService {
     }
 
     @Override
+    @Transactional
+    @CatchThrows(call = "newNumberException")
     public BlockedNumberDto create(UpdateBlockedNumberDto dto) {
-	BlockedNumber entity = numberMapper.toEntity(dto);
+	Optional<BlockedNumber> oldNumber = blockedNumberRepository
+						.findByNumber(dto.number());
+	final BlockedNumber entity;
+	if (oldNumber.isPresent()) {
+	    entity = oldNumber.get();
+	    entity.approve();
+	} else {
+	    entity = numberMapper.toEntity(dto);
+	}
 	log.debug("The dto will be saved: {}", dto);
 	BlockedNumber saved = blockedNumberRepository.save(entity);
 	return numberMapper.toDto(saved);
@@ -66,5 +82,12 @@ public class BlackListServiceImpl implements BlackListService {
 	VoiceRecord entity = voiceRecordMapper.toEntity(dto, numberId);
 	VoiceRecord saved = voiceRecordRepository.save(entity);
 	return voiceRecordMapper.toDto(saved);
+    }
+
+    private ResourceModifyingException newNumberException(Throwable t) {
+	final String msg = "Failed to save number";
+	log.debug(STR."Failed to save number with cause: \{t.getMessage()}");
+	return new ResourceModifyingException(msg, 41);
+
     }
 }

@@ -51,6 +51,7 @@ public class NetworkServiceImpl implements NetworkService {
     private String prepareUrl(String suffix) {
 	return credentials.getBaseUrl() + suffix;
     }
+
     @Override
     public Maybe<List<LocalPhoneNumber>> tryAccessBlackList() {
 	val request = new Request.Builder()
@@ -78,7 +79,9 @@ public class NetworkServiceImpl implements NetworkService {
 				    .addHeader(CONTENT_TYPE_HEADER, JSON_TYPE_HEADER)
 				    .build();
 
-	    val requestSingle = sendRequest(numberRequest, ServerPhoneNumber.class)
+	    val requestSingle = sendRequest(
+		numberRequest,
+		ServerPhoneNumber.class)
 				    .flatMapSingle(response -> {
 
 					if (results.isEmpty()) {
@@ -87,7 +90,8 @@ public class NetworkServiceImpl implements NetworkService {
 
 					val serverResults = resultMapper
 								.toServerDtoList(results, userInfo)
-								.toArray(new ServerRecognitionResult[0]);
+								.toArray(new ServerRecognitionResult[results.size()]);
+
 					long resourceId = response.getId();
 					val resultsRequest = new Request.Builder()
 								 .url(prepareUrl("black-list/" + resourceId + "/records"))
@@ -139,6 +143,11 @@ public class NetworkServiceImpl implements NetworkService {
 
 		    @Override
 		    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+			if (response.code() == 409) {
+			    Log.d(TAG, "onResponse: Conflict saving request");
+			    emitter.onComplete();
+			    return;
+			}
 			if (!response.isSuccessful() || (hasBody && response.body() == null)) {
 			    emitter.onError(new UnknownDataFormat());
 			    return;

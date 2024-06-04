@@ -1,13 +1,10 @@
 package by.bsuir.whisper.server.model;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.TimerTask;
 
 @Getter
 @Setter
@@ -39,5 +36,8 @@ public class BlockedNumber {
     @PrePersist
     public void beforeInsert() {
 	this.registrationTime = Timestamp.from(Instant.now());
+    }
+    public void approve() {
+        approveCount += 1;
     }
 }
