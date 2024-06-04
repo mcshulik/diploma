@@ -37,34 +37,34 @@ public class BlackListServiceImpl implements BlackListService {
 
     @Override
     public List<BlockedNumberDto> getBlackList() {
-	return numberMapper.toDtoList(blockedNumberRepository.findAll());
+        return numberMapper.toDtoList(blockedNumberRepository.findAll());
     }
 
     @Override
     public Optional<BlockedNumberDto> getByOwnerAndUserId(String owner, long userId) {
 
-	return Optional.empty();
+        return Optional.empty();
     }
 
     @Override
     public Optional<BlockedNumberDto> getById(long numberId) {
-	return blockedNumberRepository
-		   .findById(numberId)
-		   .map(numberMapper::toDto);
+        return blockedNumberRepository
+                .findById(numberId)
+                .map(numberMapper::toDto);
     }
 
     @Override
     public BlockedNumberDto create(UpdateBlockedNumberDto dto) {
-	BlockedNumber entity = numberMapper.toEntity(dto);
-	log.debug("The dto will be saved: {}", dto);
-	BlockedNumber saved = blockedNumberRepository.save(entity);
-	return numberMapper.toDto(saved);
+        BlockedNumber entity = numberMapper.toEntity(dto);
+        log.debug("The dto will be saved: {}", dto);
+        BlockedNumber saved = blockedNumberRepository.save(entity);
+        return numberMapper.toDto(saved);
     }
 
     @Override
     public VoiceRecordDto createVoiceRecord(long numberId, UpdateVoiceRecordDto dto) {
-	VoiceRecord entity = voiceRecordMapper.toEntity(dto, numberId);
-	VoiceRecord saved = voiceRecordRepository.save(entity);
-	return voiceRecordMapper.toDto(saved);
+        VoiceRecord entity = voiceRecordMapper.toEntity(dto, numberId);
+        VoiceRecord saved = voiceRecordRepository.save(entity);
+        return voiceRecordMapper.toDto(saved);
     }
 }

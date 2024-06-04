@@ -12,26 +12,26 @@ import java.util.function.Function;
 public class SpringServerApplication {
 
     public static void main(String[] args) {
-	SpringApplication.run(SpringServerApplication.class, args);
+        SpringApplication.run(SpringServerApplication.class, args);
     }
 
     @Bean
     public CatchThrowsBeanPostProcessor beanPostProcessor() {
-	return new CatchThrowsBeanPostProcessor();
+        return new CatchThrowsBeanPostProcessor();
     }
 
     @Bean
     public Function<String, PasswordGenerator> generator() {
-	return (password) -> new PasswordGenerator() {
-	    @Override
-	    public String getSalt() {
-		return "123";//or any random string
-	    }
+        return (password) -> new PasswordGenerator() {
+            @Override
+            public String getSalt() {
+                return "123";//or any random string
+            }
 
-	    @Override
-	    public String getHash() {
-		return "123";
-	    }
-	};
+            @Override
+            public String getHash() {
+                return "123";
+            }
+        };
     }
 }

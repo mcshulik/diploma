@@ -27,54 +27,54 @@ public class BlackListController {
 
     @GetMapping
     public ResponseEntity<List<BlockedNumberDto>> getBlackList(
-	@RequestParam(value = "member_name", required = false) String blockedName,
-	@RequestParam(value = "user_id", required = false) Long userId
+            @RequestParam(value = "member_name", required = false) String blockedName,
+            @RequestParam(value = "user_id", required = false) Long userId
     ) {
-	if (blockedName != null && userId != null) {
-	    return blackListService
-		       .getByOwnerAndUserId(blockedName, userId)
-		       .map(dto -> ResponseEntity.ok(List.of(dto)))
-		       .orElseGet(() -> ResponseEntity.notFound().build());
-	}
-	if (blockedName == null && userId == null) {
-	    val list = blackListService.getBlackList();
-	    return ResponseEntity.ok(list);
-	}
-	return ResponseEntity.badRequest().build();
+        if (blockedName != null && userId != null) {
+            return blackListService
+                    .getByOwnerAndUserId(blockedName, userId)
+                    .map(dto -> ResponseEntity.ok(List.of(dto)))
+                    .orElseGet(() -> ResponseEntity.notFound().build());
+        }
+        if (blockedName == null && userId == null) {
+            val list = blackListService.getBlackList();
+            return ResponseEntity.ok(list);
+        }
+        return ResponseEntity.badRequest().build();
     }
 
     @GetMapping("/{memberId}")
     public ResponseEntity<BlockedNumberDto> getBlackNumber(
-	@PathVariable @NotNull Long memberId
+            @PathVariable @NotNull Long memberId
     ) {
-	return blackListService
-		   .getById(memberId)
-		   .map(ResponseEntity::ok)
-		   .orElseGet(() -> ResponseEntity.notFound().build());
+        return blackListService
+                .getById(memberId)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<BlockedNumberDto> addBlackNumber(
-	@RequestBody @Validated(Create.class) UpdateBlockedNumberDto dto
+            @RequestBody @Validated(Create.class) UpdateBlockedNumberDto dto
     ) {
-	val entity = blackListService.create(dto);
-	val uri = prepareBlackNumberURI(entity.id());
-	return ResponseEntity
-		   .created(uri)
-		   .body(entity);
+        val entity = blackListService.create(dto);
+        val uri = prepareBlackNumberURI(entity.id());
+        return ResponseEntity
+                .created(uri)
+                .body(entity);
     }
 
     @PostMapping("/{memberId}/records")
     public ResponseEntity<?> addVoiceRecord(
-	@PathVariable @NotNull Long memberId,
-	@RequestBody @Validated(Create.class) UpdateVoiceRecordDto dto
+            @PathVariable @NotNull Long memberId,
+            @RequestBody @Validated(Create.class) UpdateVoiceRecordDto dto
     ) {
-	val _ = blackListService.createVoiceRecord(memberId, dto);
-	return ResponseEntity.accepted().build();
+        val _ = blackListService.createVoiceRecord(memberId, dto);
+        return ResponseEntity.accepted().build();
     }
 
     private URI prepareBlackNumberURI(long id) {
-	val value = "/api/v1.0/black-list/" + id;
-	return URI.create(value);
+        val value = "/api/v1.0/black-list/" + id;
+        return URI.create(value);
     }
 }
