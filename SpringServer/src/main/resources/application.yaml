@@ -3,7 +3,10 @@ spring:
     name: SpringServer
   datasource:
     type: com.zaxxer.hikari.HikariDataSource
-    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    url: 'jdbc:postgresql://localhost:5432/whisper'
+    driver-class-name: org.postgresql.Driver
+    username: 'postgres'
+    password: 'postgres'
   jpa:
     show-sql: true
     hibernate:
@@ -14,3 +17,6 @@ spring:
 server:
   port: 8081
   address: '0.0.0.0'
+logging:
+  level:
+    by.bsuir.whisper.server.*: debug

@@ -42,6 +42,7 @@ public class BlackListServiceImpl implements BlackListService {
 
     @Override
     public Optional<BlockedNumberDto> getByOwnerAndUserId(String owner, long userId) {
+
 	return Optional.empty();
     }
 
@@ -55,6 +56,7 @@ public class BlackListServiceImpl implements BlackListService {
     @Override
     public BlockedNumberDto create(UpdateBlockedNumberDto dto) {
 	BlockedNumber entity = numberMapper.toEntity(dto);
+	log.debug("The dto will be saved: {}", dto);
 	BlockedNumber saved = blockedNumberRepository.save(entity);
 	return numberMapper.toDto(saved);
     }

@@ -64,19 +64,6 @@ public class BlackListController {
 		   .body(entity);
     }
 
-    @PostMapping("/{memberId}/record")
-    public ResponseEntity<?> addBlackNumbers(
-	@PathVariable @NotNull Long memberId,
-	@RequestBody @Validated(Create.class) List<UpdateVoiceRecordDto> dtoList
-    ) {
-	for (val dto : dtoList) {
-	    val _ = blackListService.createVoiceRecord(memberId, dto);
-	}
-	return ResponseEntity
-		   .accepted()
-		   .build();
-    }
-
     @PostMapping("/{memberId}/records")
     public ResponseEntity<?> addVoiceRecord(
 	@PathVariable @NotNull Long memberId,

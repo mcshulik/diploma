@@ -33,7 +33,6 @@ import com.example.detector.services.notification.NotificationService;
 import com.example.detector.services.notification.impl.NotificationServiceImpl;
 import com.example.detector.services.storage.StorageService;
 import com.example.detector.services.whisper.WhisperService;
-import com.example.detector.utils.FileUtils;
 import com.example.detector.utils.WaveUtil;
 
 import dagger.hilt.android.AndroidEntryPoint;
@@ -228,6 +227,7 @@ public class WhisperActivity extends AppCompatActivity {
         btnSendServerData.setOnClickListener(v -> {
             assert networkService != null && storageService != null;
             assert editPhoneNumber.getText() != null;
+
             val label = String.valueOf(editPhoneNumber.getText());
             if (label.isEmpty()) {
                 Toast
