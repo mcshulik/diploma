@@ -205,6 +205,7 @@ public class WhisperActivity extends AppCompatActivity {
         btnSendServerData.setOnClickListener(v -> {
             assert networkService != null && storageService != null;
             assert editPhoneNumber.getText() != null;
+
             val label = String.valueOf(editPhoneNumber.getText());
             if (label.isEmpty()) {
                 Toast

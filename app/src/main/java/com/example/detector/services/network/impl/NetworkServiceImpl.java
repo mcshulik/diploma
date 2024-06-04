@@ -54,6 +54,7 @@ public class NetworkServiceImpl implements NetworkService {
 			  .url("http://10.0.2.2:8081/api/v1.0/black-list")
 			  .get()
 			  .build();
+
 	return sendRequest(request, ServerPhoneNumber[].class)
 		   .map(Arrays::asList)
 		   .map(numberMapper::fromServerDtoList)
@@ -63,28 +64,35 @@ public class NetworkServiceImpl implements NetworkService {
     @Override
     public Maybe<?> trySendBlackList(Pair<LocalPhoneNumber, List<LocalRecognitionResult>>... numbers) {
 	var single = (Single<?>) Single.just(42);
+
 	for (Pair<LocalPhoneNumber, List<LocalRecognitionResult>> numberAndResults : numbers) {
+
 	    val number = (ServerPhoneNumber) numberMapper.toServerDto(numberAndResults.first);
 	    val results = numberAndResults.second;
-
 	    val numberRequest = new Request.Builder()
 				    .url("http://10.0.2.2:8081/api/v1.0/black-list")
 				    .post(ofBody(number))
 				    .addHeader(CONTENT_TYPE_HEADER, JSON_TYPE_HEADER)
 				    .build();
+
 	    val requestSingle = sendRequest(numberRequest, ServerPhoneNumber.class)
 				    .flatMapSingle(response -> {
+
+					if (results.isEmpty()) {
+					    return Single.just(response);
+					}
+
 					val serverResults = resultMapper
 								.toServerDtoList(results, userInfo)
 								.toArray(new ServerRecognitionResult[0]);
-
 					long resourceId = response.getId();
 					val resultsRequest = new Request.Builder()
 								 .url("http://10.0.2.2:8081/api/v1.0/black-list/" + resourceId + "/records")
 								 .post(ofBody(serverResults))
 								 .build();
 					val request = sendRequest(resultsRequest, null);
-					return Single.just(resourceId)
+
+					return Single.just(response)
 						   .zipWith(request.toSingle(), Pair::create);
 				    }).toSingle();
 	    single = single
@@ -132,6 +140,7 @@ public class NetworkServiceImpl implements NetworkService {
 			    emitter.onError(new UnknownDataFormat());
 			    return;
 			}
+
 			if (!hasBody) {
 			    emitter.onComplete();
 			    return;

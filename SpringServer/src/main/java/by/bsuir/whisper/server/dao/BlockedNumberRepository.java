@@ -7,4 +7,6 @@ import java.util.Optional;
 
 public interface BlockedNumberRepository extends JpaRepository<BlockedNumber, Long> {
     Optional<BlockedNumber> findByNumberAndOwner(String number, String owner);
+
+    Optional<BlockedNumber> findByNumber(String number);
 }

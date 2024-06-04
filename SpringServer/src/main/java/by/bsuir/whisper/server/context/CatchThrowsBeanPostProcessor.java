@@ -82,8 +82,13 @@ public class CatchThrowsBeanPostProcessor implements BeanPostProcessor {
 		assert annotation != null;
 		String invokable = annotation.call();
 		Pair<Class<?>[], boolean[]> argsPair = fetchInvokableArguments(method, annotation);
-		Method handler = clazz.getDeclaredMethod(invokable, argsPair.getFirst());
-		handler.setAccessible(true);
+		Method handler;
+		try {
+		    handler = clazz.getDeclaredMethod(invokable, argsPair.getFirst());
+		    handler.setAccessible(true);
+		} catch (Throwable t) {
+		    throw new RuntimeException(t);
+		}
 		if (methodsMap.containsKey(method.getName()) || !(Throwable.class.isAssignableFrom(handler.getReturnType()))) {
 		    throw new IllegalStateException(STR."""
 		    Failed to create CatchInvoke annotation implementation for\{method.getName()} of \{clazz}
