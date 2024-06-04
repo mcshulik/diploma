@@ -27,10 +27,12 @@ import static com.example.detector.utils.FileUtils.resolveAssetPath;
 @Module
 @InstallIn(SingletonComponent.class)
 public abstract class TenserFlowModule {
-    public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
+    //public static final String I8N_MODEL_NAME = "whisper-tiny.tflite";
+    public static final String I8N_MODEL_NAME = "whisper-medium.tflite";
     public static final String I8N_LANG_VOC = "filters_vocab_multilingual.bin";
 
-    public static final String EN_MODEL_NAME = "whisper-tiny-en.tflite";
+    //public static final String EN_MODEL_NAME = "whisper-tiny-en.tflite";
+    public static final String EN_MODEL_NAME = "whisper-medium.tflite";
     public static final String EN_LANG_VOC = "filters_vocab_en.bin";
 
     @Binds
