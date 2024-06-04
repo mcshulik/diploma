@@ -7,16 +7,15 @@ import com.example.detector.services.LocalPhoneNumber;
 import com.example.detector.services.LocalRecognitionResult;
 import com.example.detector.services.UserInfo;
 import com.example.detector.services.network.NetworkService;
+import com.example.detector.services.network.context.ServerInfo;
 import com.example.detector.services.network.exceptions.UnknownDataFormat;
 import com.example.detector.services.network.mappers.PhoneNumberMapper;
 import com.example.detector.services.network.mappers.RecognitionResultMapper;
 import com.example.detector.services.network.model.ServerPhoneNumber;
 import com.example.detector.services.network.model.ServerRecognitionResult;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
-import dagger.hilt.android.scopes.ServiceScoped;
 import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -47,11 +46,15 @@ public class NetworkServiceImpl implements NetworkService {
     private final OkHttpClient client;
     private final PhoneNumberMapper numberMapper;
     private final RecognitionResultMapper resultMapper;
+    private final ServerInfo credentials;
 
+    private String prepareUrl(String suffix) {
+	return credentials.getBaseUrl() + suffix;
+    }
     @Override
     public Maybe<List<LocalPhoneNumber>> tryAccessBlackList() {
 	val request = new Request.Builder()
-			  .url("http://10.0.2.2:8081/api/v1.0/black-list")
+			  .url(prepareUrl("/black-list"))
 			  .get()
 			  .build();
 
@@ -70,7 +73,7 @@ public class NetworkServiceImpl implements NetworkService {
 	    val number = (ServerPhoneNumber) numberMapper.toServerDto(numberAndResults.first);
 	    val results = numberAndResults.second;
 	    val numberRequest = new Request.Builder()
-				    .url("http://10.0.2.2:8081/api/v1.0/black-list")
+				    .url(prepareUrl("/black-list"))
 				    .post(ofBody(number))
 				    .addHeader(CONTENT_TYPE_HEADER, JSON_TYPE_HEADER)
 				    .build();
@@ -87,7 +90,7 @@ public class NetworkServiceImpl implements NetworkService {
 								.toArray(new ServerRecognitionResult[0]);
 					long resourceId = response.getId();
 					val resultsRequest = new Request.Builder()
-								 .url("http://10.0.2.2:8081/api/v1.0/black-list/" + resourceId + "/records")
+								 .url(prepareUrl("black-list/" + resourceId + "/records"))
 								 .post(ofBody(serverResults))
 								 .build();
 					val request = sendRequest(resultsRequest, null);
