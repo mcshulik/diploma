@@ -12,7 +12,6 @@ import dagger.Module;
 import dagger.Provides;
 import dagger.hilt.InstallIn;
 import dagger.hilt.components.SingletonComponent;
-import lombok.val;
 import okhttp3.OkHttpClient;
 import org.mapstruct.factory.Mappers;
 
@@ -36,7 +35,13 @@ public abstract class NetworkModule {
 		   .id(1)
 		   .build();
     }
-
+    @Provides
+    public static ServerInfo serverInfo() {
+	return ServerInfo.builder()
+//		   .baseUrl("http://192.168.64.100:8081/api/v1.0")
+		   .baseUrl("http://192.168.50.14:8081/api/v1.0")
+		   .build();
+    }
     @Provides
     public static OkHttpClient webClient() {
 	return new OkHttpClient.Builder()
