@@ -64,7 +64,6 @@ public class CatchThrowsBeanPostProcessor implements BeanPostProcessor {
     }
 
     @Override
-    @SneakyThrows
     public Object postProcessBeforeInitialization(Object bean, @NonNull String beanName) throws BeansException {
 	Class<?> clazz = bean.getClass();
 	Map<String, ExceptionHandlerParams> methodsMap = new HashMap<>();
